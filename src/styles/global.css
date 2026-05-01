@@ -1,0 +1,176 @@
+/* ─── CSS Variables ─────────────────────────────────────── */
+:root {
+  --color-paper: #F7F5EE;
+  --color-paper-deep: #F0EDE3;
+  --color-paper-card: #FDFCF6;
+  --color-ink: #1A1A17;
+  --color-ink-mute: #4A4A45;
+  --color-ink-faint: #8A8A82;
+  --color-rule: #D9D5C7;
+
+  --color-green: #0F4C3A;
+  --color-green-soft: #E6EFEA;
+  --color-green-bright: #1F7A5E;
+
+  --color-amber: #D69E2E;
+  --color-amber-soft: #FDF3D9;
+
+  --color-coral: #C4583A;
+  --color-coral-soft: #F8E1D8;
+  --color-coral-text: #A33D24;
+
+  --color-purple: #5A4499;
+  --color-purple-soft: #EBE5FA;
+
+  --font-serif: Georgia, 'Times New Roman', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Courier New', monospace;
+
+  /* short-name aliases for new components */
+  --paper: #F7F5EE;
+  --paper-deep: #F0EDE3;
+  --green-sig: #0F4C3A;
+  --green-bright: #1F7A5E;
+  --green-soft: #E6EFEA;
+  --amber: #D69E2E;
+  --coral: #C4583A;
+  --ink: #1A1A17;
+  --ink-muted: #4A4A45;
+
+  /* container widths */
+  --container-default: 980px;
+  --container-reading: 720px;
+}
+
+/* ─── Reset ─────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+a { text-decoration: none; color: inherit; }
+button { background: none; border: none; font: inherit; cursor: pointer; }
+
+/* ─── Graph paper background ────────────────────────────── */
+body {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  position: relative;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(to right, rgba(26, 26, 23, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(26, 26, 23, 0.04) 1px, transparent 1px);
+  background-size: 28px 28px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+main, header, footer, nav {
+  position: relative;
+  z-index: 1;
+}
+
+/* ─── Breathing dot animation ───────────────────────────── */
+@keyframes glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(31, 122, 94, 0.5); }
+  50%       { box-shadow: 0 0 0 5px rgba(31, 122, 94, 0); }
+}
+
+/* ─── Tag pills ─────────────────────────────────────────── */
+.pill {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--color-green);
+  background: var(--color-green-soft);
+  padding: 1px 6px;
+  border-radius: 3px;
+}
+
+.tag-pill {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 3px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+}
+.tag-pill.prod-bug      { color: #0F4C3A; background: #E6EFEA; }
+.tag-pill.system-design { color: #5A4499; background: #EBE5FA; }
+.tag-pill.ai            { color: #A17617; background: #FDF3D9; }
+.tag-pill.career        { color: #A33D24; background: #F8E1D8; }
+
+/* ─── Inline highlight ──────────────────────────────────── */
+.hl {
+  background: #FDF3D9;
+  padding: 0 3px;
+  border-radius: 2px;
+}
+
+.gu {
+  border-bottom: 2px solid var(--color-green);
+  padding-bottom: 1px;
+}
+
+.inline-note {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--color-green);
+  background: var(--color-green-soft);
+  padding: 1px 6px;
+  border-radius: 3px;
+  border-bottom: 1px solid var(--color-green);
+}
+
+/* ─── Section kicker ────────────────────────────────────── */
+.kicker {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--color-coral);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  display: block;
+  margin-bottom: 0.75rem;
+}
+
+/* ─── Section heading shared style ─────────────────────── */
+.section-h2 {
+  font-family: var(--font-serif);
+  font-size: 38px;
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: -0.025em;
+  color: var(--color-ink);
+  margin-bottom: 2rem;
+}
+.section-h2 em {
+  font-style: italic;
+  color: var(--color-green);
+}
+
+@media (max-width: 800px) {
+  .section-h2 { font-size: 28px; }
+}
+
+/* ─── Toast notification ────────────────────────────────── */
+.toast {
+  position: fixed;
+  top: 60px;
+  right: 1rem;
+  background: var(--color-green);
+  color: var(--color-paper);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 6px 14px;
+  border-radius: 6px;
+  z-index: 999;
+  opacity: 0;
+  transform: translateY(-6px);
+  transition: opacity 0.2s, transform 0.2s;
+  pointer-events: none;
+}
+.toast.show {
+  opacity: 1;
+  transform: translateY(0);
+}

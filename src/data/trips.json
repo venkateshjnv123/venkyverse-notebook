@@ -1,0 +1,74 @@
+{
+  "trips": [
+    {
+      "id": "jibhi-sojha-2026-02",
+      "places": ["Jibhi", "Sojha"],
+      "date": "2026-02",
+      "displayDate": "Feb 2026",
+      "writeup": null
+    },
+    {
+      "id": "varanasi-2025-11",
+      "places": ["Varanasi"],
+      "date": "2025-11",
+      "displayDate": "Nov 2025",
+      "writeup": null
+    },
+    {
+      "id": "gokarna-goa-2025-11",
+      "places": ["Gokarna", "Goa"],
+      "date": "2025-11",
+      "displayDate": "Nov 2025",
+      "writeup": null
+    },
+    {
+      "id": "mussoorie-2025-08",
+      "places": ["Mussoorie"],
+      "date": "2025-08",
+      "displayDate": "Aug 2025",
+      "writeup": null
+    },
+    {
+      "id": "lansdowne-2025-08",
+      "places": ["Lansdowne"],
+      "date": "2025-08",
+      "displayDate": "Aug 2025",
+      "writeup": null
+    },
+    {
+      "id": "goa-2025-06",
+      "places": ["Goa"],
+      "date": "2025-06",
+      "displayDate": "Jun 2025",
+      "writeup": null
+    },
+    {
+      "id": "mathura-vrindavan-2025-03",
+      "places": ["Mathura", "Vrindavan"],
+      "date": "2025-03",
+      "displayDate": "Mar 2025",
+      "writeup": null
+    },
+    {
+      "id": "tirupati-kanipakam-srikalahasti-2025-01",
+      "places": ["Tirupati", "Kanipakam", "Sri Kalahasti"],
+      "date": "2025-01",
+      "displayDate": "Jan 2025",
+      "writeup": null
+    },
+    {
+      "id": "manali-2024-12",
+      "places": ["Manali"],
+      "date": "2024-12",
+      "displayDate": "Dec 2024",
+      "writeup": null
+    },
+    {
+      "id": "hyderabad-kadapa-2024-12",
+      "places": ["Hyderabad", "Kadapa"],
+      "date": "2024-12",
+      "displayDate": "Dec 2024",
+      "writeup": null
+    }
+  ]
+}

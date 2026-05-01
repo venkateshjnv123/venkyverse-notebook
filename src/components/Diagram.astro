@@ -1,0 +1,40 @@
+---
+interface Props {
+  caption?: string;
+  src?: string;
+  alt?: string;
+}
+const { caption, src, alt = '' } = Astro.props;
+---
+<figure class="diagram">
+  {src
+    ? <img src={src} alt={alt} />
+    : <slot />
+  }
+  {caption && <figcaption class="diagram-caption">{caption}</figcaption>}
+</figure>
+
+<style>
+.diagram {
+  margin: 1.75rem 0;
+  background: #FDFCF6;
+  border: 0.5px solid #D9D5C7;
+  border-radius: 8px;
+  padding: 1rem;
+  text-align: center;
+}
+
+.diagram :global(svg),
+.diagram img {
+  max-width: 100%;
+  height: auto;
+}
+
+.diagram-caption {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 13px;
+  color: #8A8A82;
+  margin-top: 0.75rem;
+}
+</style>

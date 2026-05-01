@@ -1,0 +1,81 @@
+{
+  "roles": [
+    {
+      "id": "cars24",
+      "current": true,
+      "dateRange": "Apr 2025 — Present",
+      "title": "SDE-1",
+      "company": "Cars24",
+      "location": "Bangalore",
+      "summary": "Designing payment orchestration microservices and C2C platform features. Java + Spring Boot + heavy event-driven architecture, with payment gateways and seller/buyer workflows that need to stay reliable at scale.",
+      "details": {
+        "narrative": "At Cars24 I work primarily on two systems: a payment orchestration layer that routes transactions across Razorpay, Juspay, and Paytm, and a C2C platform that handles the seller/buyer side of vehicle marketplace flows. Both have non-trivial scale and reliability requirements — payments especially, where 'mostly works' isn't an option.",
+        "shipped": [
+          {
+            "title": "Payment orchestration system",
+            "body": "multi-gateway routing (Razorpay, Juspay, Paytm) handling 1000+ transactions/day at 98% reliability."
+          },
+          {
+            "title": "C2C workflows",
+            "body": "seller/buyer monetization, chat payments, lead generation, seller journeys. Supports 100+ users/min and 50+ daily payments."
+          },
+          {
+            "title": "Verify-360",
+            "body": "a vehicle document verification platform. Users and officials upload, review, approve, and reject documents end-to-end."
+          },
+          {
+            "title": "Bulk operations + analytics",
+            "body": "extended backend APIs for bulk upload/download and analytics dashboards. Improved sales conversion by 50%."
+          }
+        ]
+      },
+      "stack": ["Java", "Spring Boot", "PostgreSQL", "Redis", "RabbitMQ", "Microservices"],
+      "lesson": "Payments taught me that 'eventually consistent' is a luxury you don't always get. Some systems demand correctness now, every time."
+    },
+    {
+      "id": "sprinklr",
+      "current": false,
+      "dateRange": "Feb 2024 — Mar 2025",
+      "title": "Software Engineer (Automation)",
+      "company": "Sprinklr",
+      "location": "Bangalore",
+      "summary": "Worked on test automation for Sprinklr's Workforce Management module. Built a modern API automation framework that cut test-case creation time by 70% via dynamic JSON parsing. Optimized Jenkins jobs to drop sanity testing duration by 4 hours.",
+      "stack": ["Java", "Selenium", "GraphQL", "REST", "Jenkins"],
+      "lesson": "Building test infrastructure is engineering, not 'just QA'. Bad tests kill velocity faster than bad code."
+    },
+    {
+      "id": "cogoport",
+      "current": false,
+      "dateRange": "Aug 2023 — Dec 2023",
+      "title": "SDE-1",
+      "company": "Cogoport",
+      "location": "Gurgaon",
+      "summary": "My first full-time engineering role. Led development of 5 HRMS modules (payroll, onboarding, expense management, etc.) with a small team. Cost savings of $50k/year for the company. Built tools used by 900+ employees.",
+      "stack": ["Node.js", "PostgreSQL", "GraphQL", "Express"],
+      "lesson": "First job is where you stop coding to learn and start coding to ship. Different skill."
+    },
+    {
+      "id": "aspiro",
+      "current": false,
+      "dateRange": "Feb 2022 — Jul 2022",
+      "title": "SDE Intern",
+      "company": "Aspiro",
+      "location": "Remote",
+      "summary": "My first taste of production engineering. Integrated Microsoft Clarity, Google Analytics, Redux, and Firebase. Set up staging environments on AWS and Firebase, automated deployment via GitLab — cut deploy time by 70%.",
+      "stack": ["React", "Firebase", "AWS", "GitLab CI"],
+      "lesson": "Watching real users break my code taught me more in 5 months than two years of college."
+    },
+    {
+      "id": "iit-jodhpur",
+      "current": false,
+      "type": "education",
+      "dateRange": "2019 — 2023",
+      "title": "B.Tech, Mechanical Engineering",
+      "company": "IIT Jodhpur",
+      "location": "Jodhpur",
+      "summary": "Studied Mechanical Engineering on paper, but spent more nights debugging code than CADding gearboxes. Department Rank 3 (CGPA 8.33). Designed the braking system for the BAJA SAE'21 ATV. Led a 35-person logistics team for Varchas '22.",
+      "stack": ["Mechanical", "BAJA SAE", "Self-taught CS", "Dept Rank 3"],
+      "lesson": "The most useful course I 'took' at IIT was the one I didn't enroll in — late nights, Stack Overflow, and the discovery that I liked computers more than gearboxes."
+    }
+  ]
+}

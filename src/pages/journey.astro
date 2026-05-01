@@ -1,0 +1,747 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import rolesData from '../data/roles.json';
+
+const { roles } = rolesData;
+---
+<BaseLayout
+  title="Journey · Venkatesh Patnala"
+  description="Six years from mechanical engineering at IIT Jodhpur to backend systems at Cars24. The roles, projects, and lessons along the way."
+  ogType="profile"
+  activePage="journey"
+>
+
+  <!-- Header -->
+  <header class="journey-header">
+    <div class="header-inner">
+      <span class="kicker-line">
+        <span class="kicker-bar"></span>
+        THE JOURNEY · 2019—NOW
+      </span>
+      <h1 class="hero-h1">Six years of <em>learning to ship.</em></h1>
+      <p class="hero-desc">From mechanical engineering at IIT to backend systems at Cars24. The roles, the projects, the things that broke, and what each taught me.</p>
+      <div class="stat-strip">
+        <span>5 roles</span>
+        <span class="dot">·</span>
+        <span>4 companies</span>
+        <span class="dot">·</span>
+        <span>2 internships</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Timeline -->
+  <section class="timeline-section">
+    <div class="timeline-inner">
+      <div class="timeline-vertical">
+
+        <!-- Cars24 -->
+        <div class="role-card current">
+          <div class="role-node"></div>
+          <div class="role-page">
+            <header class="role-meta">
+              <span class="role-date">APR 2025 — PRESENT</span>
+              <span class="role-status"><span class="status-dot"></span>CURRENT</span>
+            </header>
+            <div class="role-title">SDE-1</div>
+            <div class="role-where">
+              <span class="role-company">Cars24</span>
+              <span class="role-sep">·</span>
+              <span class="role-loc">Bangalore</span>
+            </div>
+            <p class="role-summary">Designing payment orchestration microservices and C2C platform features. Java + Spring Boot + heavy event-driven architecture, with payment gateways and seller/buyer workflows that need to stay reliable at scale.</p>
+
+            <p class="role-narrative">At Cars24 I work on two systems: a payment orchestration layer that smart-routes transactions across Razorpay, Juspay, Cashfree, and Paytm based on success rate, cost, and failover — and a C2C platform handling seller/buyer marketplace flows at thousands of users per minute. Both demand correctness, not just availability.</p>
+
+            <div class="role-shipped-label">What I've shipped</div>
+            <ul class="role-bullets">
+              <li><strong>Payment orchestration microservices</strong> — multi-gateway routing (Razorpay, Juspay, Cashfree, Paytm) handling 1k peak TPS at 99.9%+ reliability.</li>
+              <li><strong>Sales panel API optimization</strong> — dropped p99 latency from 1–2s to ~100ms; added bulk upload/download across multiple formats to streamline agent workflows.</li>
+              <li><strong>C2C platform</strong> — seller/buyer monetization, chat payments, lead generation, seller journey revamp. Supports thousands of users/min and 1000+ daily payments.</li>
+              <li><strong>AI chatbot integration</strong> — trained and integrated on C2C-specific data via transactional APIs; enables payments, refunds, and order ops directly through chat.</li>
+              <li><strong>Verify-360</strong> — Spring Boot + PostgreSQL document verification platform backed by Amazon S3; legal officials review/approve/reject vehicle documents by permission level.</li>
+              <li><strong>Platform reliability</strong> — centralized config module and logging across services; raised unit + integration test coverage from 0 to 50% on critical services. Integrated Clevertap (notifications), Spyne (image webhooks), and Acefone (call logs); parallelized C2C BFF-layer APIs in Node.js by user role.</li>
+            </ul>
+
+            <div class="role-stack">
+              {["Java", "Spring Boot", "PostgreSQL", "Redis", "Kafka", "RabbitMQ", "Microservices", "Node.js"].map(t => (
+                <span class="pill">{t}</span>
+              ))}
+            </div>
+
+            <div class="role-lesson">
+              <span class="lesson-label">WHAT THIS TAUGHT ME</span>
+              <p class="lesson-body">Payments taught me that "eventually consistent" is a luxury you don't always get. Some systems demand correctness now, every time.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sprinklr -->
+        <div class="role-card">
+          <div class="role-node"></div>
+          <div class="role-page">
+            <header class="role-meta">
+              <span class="role-date">FEB 2024 — MAR 2025</span>
+            </header>
+            <div class="role-title">Automation Engineer</div>
+            <div class="role-where">
+              <span class="role-company">Sprinklr</span>
+              <span class="role-sep">·</span>
+              <span class="role-loc">Bangalore</span>
+            </div>
+            <p class="role-summary">Built and owned test automation infrastructure for Sprinklr's Workforce Management module. Cut sanity run time from 12 hours to 2 hours across 1500 test cases. Engineered a JSON-driven API framework that eliminated DTO boilerplate entirely.</p>
+            <div class="role-shipped-label">What I shipped</div>
+            <ul class="role-bullets">
+              <li><strong>Sanity pipeline optimization</strong> — cut 12-hour runs (1500 test cases) down to 2 hours through optimized Jenkins job orchestration.</li>
+              <li><strong>Spring Boot admin panel</strong> — company-wide test case management with alerts, recurring runs, and reports; handling 100s of users and 1000s of test runs.</li>
+              <li><strong>JSON-driven API automation framework</strong> — single JSON file executes full test suite across 7 flows (if/for/switch/payload/headers/query params) using strategy + factory builder patterns. Eliminated DTO boilerplate entirely.</li>
+              <li><strong>AI output validation</strong> — test modules for AI-generated forecasting and scheduling outputs; validates ~100 constraint combinations per input form across 10+ dropdowns.</li>
+            </ul>
+            <div class="role-stack">
+              {["Java", "Spring Boot", "Selenium", "GraphQL", "REST APIs", "Jenkins"].map(t => (
+                <span class="pill">{t}</span>
+              ))}
+            </div>
+            <div class="role-lesson">
+              <span class="lesson-label">WHAT THIS TAUGHT ME</span>
+              <p class="lesson-body">Building test infrastructure is engineering, not "just QA". Bad tests kill velocity faster than bad code.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cogoport -->
+        <div class="role-card">
+          <div class="role-node"></div>
+          <div class="role-page">
+            <header class="role-meta">
+              <span class="role-date">AUG 2023 — DEC 2023</span>
+            </header>
+            <div class="role-title">Software Development Engineer</div>
+            <div class="role-where">
+              <span class="role-company">Cogoport</span>
+              <span class="role-sep">·</span>
+              <span class="role-loc">Gurgaon</span>
+            </div>
+            <p class="role-summary">First full-time engineering role. Built HRMS modules with a team of 3, replacing an existing portal and saving ~$50K/year in licensing. Shipped tools used by 900+ employees.</p>
+            <div class="role-shipped-label">What I shipped</div>
+            <ul class="role-bullets">
+              <li><strong>HRMS portal replacement</strong> — Payroll, Onboarding, Leave Management, and more with a team of 3; cut ~$50K/year in licensing costs.</li>
+              <li><strong>Expense & Access Management</strong> — automated tool access provisioning, used by 900+ employees.</li>
+              <li><strong>Analytics overhaul</strong> — integrated data from multiple databases and built a SQL query generator for visualization; dropped report generation from 1–2 hours to minutes.</li>
+            </ul>
+            <div class="role-stack">
+              {["Node.js", "PostgreSQL", "GraphQL", "Express"].map(t => (
+                <span class="pill">{t}</span>
+              ))}
+            </div>
+            <div class="role-lesson">
+              <span class="lesson-label">WHAT THIS TAUGHT ME</span>
+              <p class="lesson-body">First job is where you stop coding to learn and start coding to ship. Different skill.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Aspiro -->
+        <div class="role-card">
+          <div class="role-node"></div>
+          <div class="role-page">
+            <header class="role-meta">
+              <span class="role-date">FEB 2022 — JUL 2022</span>
+            </header>
+            <div class="role-title">SDE Intern</div>
+            <div class="role-where">
+              <span class="role-company">Aspiro</span>
+              <span class="role-sep">·</span>
+              <span class="role-loc">Remote</span>
+            </div>
+            <p class="role-summary">First taste of production. Integrated analytics tools for a 3x interactivity uplift and automated GitLab → AWS EC2 deployments via Docker scripts, cutting deploy time by ~70% to ~5 minutes.</p>
+            <div class="role-shipped-label">What I shipped</div>
+            <ul class="role-bullets">
+              <li><strong>Analytics stack</strong> — integrated Microsoft Clarity, Google Analytics, and Firebase to track user behavior; 3x interactivity uplift.</li>
+              <li><strong>Deployment automation</strong> — automated GitLab → AWS EC2 deploys via Docker scripts; cut deploy time by ~70% to ~5 minutes.</li>
+            </ul>
+            <div class="role-stack">
+              {["React", "Firebase", "AWS EC2", "Docker", "GitLab CI"].map(t => (
+                <span class="pill">{t}</span>
+              ))}
+            </div>
+            <div class="role-lesson">
+              <span class="lesson-label">WHAT THIS TAUGHT ME</span>
+              <p class="lesson-body">Watching real users break my code taught me more in 5 months than two years of college.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- IIT Jodhpur -->
+        <div class="role-card">
+          <div class="role-node"></div>
+          <div class="role-page">
+            <header class="role-meta">
+              <span class="role-date">2019 — 2023</span>
+            </header>
+            <div class="role-title">B.Tech, Mechanical Engineering</div>
+            <div class="role-where">
+              <span class="role-company">IIT Jodhpur</span>
+              <span class="role-sep">·</span>
+              <span class="role-loc">Jodhpur</span>
+            </div>
+            <p class="role-summary">Studied Mechanical Engineering on paper, but spent more nights debugging code than CADding gearboxes. Department Rank 3 (CGPA 8.33). Designed the braking system for the BAJA SAE'21 ATV. Led a 35-person logistics team for Varchas '22.</p>
+
+            <div class="role-pivot-note">
+              <span class="pivot-icon">⤳</span>
+              <span class="pivot-text">
+                Studied Mechanical, taught myself backend on the side, did two CS internships, and never looked back. <a href="/about">The longer story →</a>
+              </span>
+            </div>
+
+            <div class="role-stack">
+              {["Mechanical", "BAJA SAE", "Self-taught CS", "Dept Rank 3"].map(t => (
+                <span class="pill">{t}</span>
+              ))}
+            </div>
+            <div class="role-lesson">
+              <span class="lesson-label">WHAT THIS TAUGHT ME</span>
+              <p class="lesson-body">The most useful course I "took" at IIT was the one I didn't enroll in — late nights, Stack Overflow, and the discovery that I liked computers more than gearboxes.</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Closing note -->
+  <section class="closing-section">
+    <div class="closing-inner">
+      <p class="closing-text">Six years in, four companies, one career pivot. The pattern, looking back, is simple: pick the next thing that scares you a little, then write down what you learned along the way.</p>
+      <p class="closing-text">The notebook continues.</p>
+      <div class="closing-sig">
+        <div class="sig-name">— v. · bangalore</div>
+        <div class="sig-date">apr 2026</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta-wrap">
+    <div class="cta-card">
+      <div class="cta-left">
+        <span class="cta-kicker">WHERE THIS GOES NEXT</span>
+        <h2 class="cta-h2">Hiring for an <em>SDE-2 backend role</em>? Let's chat.</h2>
+        <p class="cta-p">I'm building toward systems that scale, teams I respect, and problems that don't have textbook answers. If your role fits any of that, I'd love to hear from you.</p>
+      </div>
+      <div class="cta-buttons">
+        <a href="mailto:venkateshjnv123@gmail.com" class="btn-primary">email me →</a>
+        <a href="/writing" class="btn-secondary">or read my latest writing</a>
+      </div>
+    </div>
+  </section>
+
+</BaseLayout>
+
+<style>
+/* ─── Header ──────────────────────────────────────────────── */
+.journey-header {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 3rem 2rem 2rem;
+}
+
+.header-inner {
+  border-bottom: 0.5px dashed #D9D5C7;
+  padding-bottom: 1.5rem;
+}
+
+.kicker-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: #C4583A;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 0.75rem;
+}
+
+.kicker-bar {
+  display: inline-block;
+  width: 20px;
+  height: 1.5px;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.hero-h1 {
+  font-family: var(--font-serif);
+  font-size: 48px;
+  font-weight: 400;
+  line-height: 1.05;
+  letter-spacing: -0.025em;
+  color: #1A1A17;
+  margin-bottom: 1rem;
+}
+
+.hero-h1 em {
+  font-style: italic;
+  color: #0F4C3A;
+  position: relative;
+}
+
+.hero-h1 em::after {
+  content: '';
+  position: absolute;
+  left: -2px; right: -2px; bottom: 4px;
+  height: 10px;
+  background: #D69E2E;
+  opacity: 0.35;
+  z-index: -1;
+  border-radius: 2px;
+  transform: skewX(-4deg) rotate(-0.5deg);
+}
+
+.hero-desc {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 17px;
+  color: #4A4A45;
+  line-height: 1.55;
+  max-width: 600px;
+  margin-bottom: 1rem;
+}
+
+.stat-strip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: #8A8A82;
+  letter-spacing: 0.04em;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 0.5px dashed #D9D5C7;
+}
+
+.dot { color: #C4C0B2; }
+
+/* ─── Timeline ────────────────────────────────────────────── */
+.timeline-section { padding: 1rem 0 0; }
+
+.timeline-inner {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 0 2rem 2rem;
+}
+
+.timeline-vertical {
+  position: relative;
+  padding-left: 40px;
+}
+
+.timeline-vertical::before {
+  content: '';
+  position: absolute;
+  left: 18px;
+  top: 0; bottom: 0;
+  width: 0.5px;
+  background-image: linear-gradient(to bottom, #8A8A82 50%, transparent 50%);
+  background-size: 1px 6px;
+  z-index: 0;
+}
+
+/* ─── Role card ───────────────────────────────────────────── */
+.role-card {
+  position: relative;
+  margin-bottom: 2.5rem;
+  transition: transform 0.15s;
+}
+
+.role-card:hover { transform: translateY(-1px); }
+
+.role-node {
+  position: absolute;
+  left: -28px;
+  top: 1.75rem;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #F7F5EE;
+  border: 1.5px solid #8A8A82;
+  z-index: 2;
+}
+
+.role-card.current .role-node {
+  background: #C4583A;
+  border-color: #C4583A;
+  box-shadow: 0 0 0 4px rgba(196, 88, 58, 0.15);
+}
+
+/* ─── Torn paper ──────────────────────────────────────────── */
+.role-page {
+  background: #FDFCF6;
+  position: relative;
+  padding: 1.75rem 1.5rem;
+  filter: drop-shadow(0 1px 0 rgba(26, 26, 23, 0.08));
+}
+
+.role-page::before {
+  content: '';
+  position: absolute;
+  left: 0; right: 0;
+  top: -10px;
+  height: 12px;
+  background-color: #FDFCF6;
+  clip-path: polygon(
+    0 100%, 4% 70%, 8% 90%, 12% 60%, 18% 85%, 24% 55%, 30% 80%,
+    36% 50%, 42% 75%, 48% 60%, 54% 85%, 60% 55%, 66% 80%,
+    72% 50%, 78% 75%, 84% 60%, 90% 85%, 96% 65%, 100% 80%, 100% 100%
+  );
+}
+
+.role-page::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0;
+  bottom: -10px;
+  height: 12px;
+  background-color: #FDFCF6;
+  clip-path: polygon(
+    0 0, 100% 0, 100% 20%, 96% 35%, 90% 15%, 84% 40%, 78% 25%,
+    72% 50%, 66% 20%, 60% 45%, 54% 15%, 48% 40%, 42% 25%,
+    36% 50%, 30% 20%, 24% 45%, 18% 15%, 12% 40%, 8% 10%, 4% 30%, 0 20%
+  );
+}
+
+/* ─── Card internals ──────────────────────────────────────── */
+.role-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.role-date {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: #8A8A82;
+  letter-spacing: 0.04em;
+}
+
+.role-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: #C4583A;
+  font-weight: 500;
+  background: #F8E1D8;
+  padding: 2px 8px;
+  border-radius: 3px;
+  letter-spacing: 0.04em;
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #C4583A;
+  flex-shrink: 0;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.8); }
+}
+
+.role-title {
+  font-family: var(--font-serif);
+  font-size: 22px;
+  font-weight: 500;
+  line-height: 1.2;
+  color: #1A1A17;
+  margin-bottom: 0.25rem;
+}
+
+.role-where {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 16px;
+  margin-bottom: 1rem;
+}
+
+.role-company { color: #0F4C3A; }
+.role-sep { color: #C4C0B2; font-style: normal; }
+.role-loc { color: #8A8A82; }
+
+.role-summary {
+  font-family: var(--font-serif);
+  font-size: 15px;
+  line-height: 1.55;
+  color: #4A4A45;
+  margin-bottom: 1rem;
+}
+
+.role-narrative {
+  font-family: var(--font-serif);
+  font-size: 15px;
+  line-height: 1.6;
+  color: #1A1A17;
+  margin-bottom: 1.25rem;
+  padding-left: 12px;
+  border-left: 2px solid #D9D5C7;
+}
+
+.role-shipped-label {
+  font-family: var(--font-serif);
+  font-size: 16px;
+  font-weight: 500;
+  color: #1A1A17;
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.role-bullets {
+  list-style: none;
+  padding-left: 0;
+  margin: 0.75rem 0 1rem;
+}
+
+.role-bullets li {
+  position: relative;
+  padding-left: 20px;
+  margin-bottom: 0.625rem;
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: #1A1A17;
+}
+
+.role-bullets li::before {
+  content: '◆';
+  position: absolute;
+  left: 0;
+  color: #0F4C3A;
+  font-size: 10px;
+  top: 4px;
+}
+
+.role-bullets strong { color: #0F4C3A; font-weight: 500; }
+
+/* ─── Stack pills ─────────────────────────────────────────── */
+.role-stack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 1rem;
+}
+
+.pill {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: #0F4C3A;
+  background: #E6EFEA;
+  padding: 1px 6px;
+  border-radius: 3px;
+}
+
+/* ─── Lesson ──────────────────────────────────────────────── */
+.role-lesson {
+  padding-top: 1rem;
+  border-top: 0.5px dashed #D9D5C7;
+  margin-top: 1rem;
+}
+
+.lesson-label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: #0F4C3A;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+}
+
+.lesson-body {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 15px;
+  color: #4A4A45;
+  line-height: 1.55;
+}
+
+/* ─── Pivot note ──────────────────────────────────────────── */
+.role-pivot-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 0.75rem 1rem;
+  background: #FDF3D9;
+  border-radius: 6px;
+  margin: 1rem 0;
+}
+
+.pivot-icon {
+  font-size: 16px;
+  color: #A17617;
+  font-family: var(--font-mono);
+  flex-shrink: 0;
+}
+
+.pivot-text {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #1A1A17;
+}
+
+.pivot-text a {
+  color: #0F4C3A;
+  border-bottom: 1px solid currentColor;
+  font-style: normal;
+  font-weight: 500;
+}
+
+.pivot-text a:hover { color: #1F7A5E; }
+
+/* ─── Closing ─────────────────────────────────────────────── */
+.closing-section {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 1rem 2rem 3rem;
+}
+
+.closing-inner { max-width: 560px; }
+
+.closing-text {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 16px;
+  color: #4A4A45;
+  line-height: 1.55;
+  margin-bottom: 0.75rem;
+}
+
+.closing-sig { margin-top: 2rem; }
+
+.sig-name {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 17px;
+  color: #0F4C3A;
+}
+
+.sig-date {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: #8A8A82;
+  margin-top: 2px;
+}
+
+/* ─── CTA ─────────────────────────────────────────────────── */
+.cta-wrap {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 0 2rem 4rem;
+}
+
+.cta-card {
+  background: #0F1F1A;
+  border-radius: 12px;
+  padding: 3.5rem 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 3rem;
+}
+
+.cta-kicker {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: #4A8A70;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  margin-bottom: 0.75rem;
+}
+
+.cta-h2 {
+  font-family: var(--font-serif);
+  font-size: 34px;
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: #E8E4D9;
+  margin-bottom: 0.75rem;
+}
+
+.cta-h2 em {
+  font-style: italic;
+  color: #D69E2E;
+}
+
+.cta-p {
+  font-family: var(--font-serif);
+  font-size: 15px;
+  color: #7A8A80;
+  line-height: 1.6;
+  max-width: 400px;
+}
+
+.cta-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+.btn-primary {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: #0F1F1A;
+  background: #D69E2E;
+  padding: 0.65rem 1.5rem;
+  border-radius: 4px;
+  font-weight: 500;
+  text-align: center;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.btn-primary:hover { background: #C48E20; }
+
+.btn-secondary {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: #4A8A70;
+  text-align: center;
+  border-bottom: 1px solid #2A5A40;
+  padding-bottom: 2px;
+  transition: color 0.15s;
+  white-space: nowrap;
+}
+
+.btn-secondary:hover { color: #6AAA90; }
+
+/* ─── Responsive ──────────────────────────────────────────── */
+@media (max-width: 700px) {
+  .hero-h1 { font-size: 32px; }
+  .timeline-vertical { padding-left: 24px; }
+  .timeline-vertical::before { left: 10px; }
+  .role-node { left: -20px; }
+  .role-page { padding: 1.25rem 1rem; }
+  .role-meta { flex-direction: column; align-items: flex-start; gap: 6px; }
+  .role-bullets li { font-size: 14px; }
+  .cta-card { flex-direction: column; padding: 2.5rem 1.5rem; }
+  .cta-h2 { font-size: 26px; }
+  .cta-buttons { width: 100%; }
+  .btn-primary, .btn-secondary { width: 100%; }
+}
+</style>

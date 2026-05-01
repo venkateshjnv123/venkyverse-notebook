@@ -1,0 +1,749 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection, render, type CollectionEntry } from 'astro:content';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('blog', ({ data }) => !data.draft);
+  return posts.map(post => ({
+    params: { slug: post.id },
+    props: { post },
+  }));
+}
+
+interface Props {
+  post: CollectionEntry<'blog'>;
+}
+
+const { post } = Astro.props;
+const { Content } = await render(post);
+
+const allPosts = (await getCollection('blog', ({ data }) => !data.draft))
+  .sort((a, b) => a.data.id.localeCompare(b.data.id));
+
+const currentIndex = allPosts.findIndex(p => p.id === post.id);
+const prevPost = currentIndex > 0 ? allPosts[currentIndex - 1] : null;
+const nextPost = currentIndex < allPosts.length - 1 ? allPosts[currentIndex + 1] : null;
+
+const relatedPosts = allPosts
+  .filter(p => p.id !== post.id && p.data.tags.some(t => post.data.tags.includes(t)))
+  .slice(0, 3);
+
+function formatDate(date: Date) {
+  return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+}
+
+const currentURL = Astro.url.href;
+const encodedURL = encodeURIComponent(currentURL);
+const encodedTitle = encodeURIComponent(post.data.title);
+---
+
+<BaseLayout
+  title={post.data.title}
+  description={post.data.tagline}
+  ogType="article"
+  canonicalURL={currentURL}
+>
+
+  <!-- Reading progress bar -->
+  <div class="progress" id="progress-bar">
+    <div class="progress-fill" id="progress-fill"></div>
+  </div>
+
+  <!-- Breadcrumbs -->
+  <div class="breadcrumbs-wrap">
+    <div class="breadcrumbs">
+      <a href="/" class="bc-link">~</a>
+      <span class="bc-sep">/</span>
+      <a href="/writing" class="bc-link">writing</a>
+      <span class="bc-sep">/</span>
+      <span class="bc-current">{post.id}</span>
+    </div>
+  </div>
+
+  <!-- Article Header -->
+  <header class="article-header">
+    <div class="header-inner">
+      <div class="post-id-line">
+        <span class="post-id">№{post.data.id.padStart(3,'0')} · {formatDate(post.data.date).toUpperCase()} · {post.data.readTime} MIN READ</span>
+      </div>
+
+      <h1 class="post-h1">{post.data.title}</h1>
+
+      <div class="post-tagline">{post.data.tagline}</div>
+
+      <div class="post-meta-row">
+        <div class="author-block">
+          <div class="author-avatar">
+            <span class="avatar-v">v</span>
+          </div>
+          <div class="author-text">
+            <div class="author-name">Venkatesh Patnala</div>
+            <div class="author-sub">backend engineer at Cars24</div>
+          </div>
+        </div>
+        <div class="post-tags">
+          {post.data.tags.map(tag => (
+            <span class={`tag-pill ${tag}`}>{tag}</span>
+          ))}
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Article Body -->
+  <article class="article-wrap">
+    <div class="article">
+      <Content />
+    </div>
+  </article>
+
+  <!-- Article Footer -->
+  <footer class="article-footer">
+    <div class="footer-inner-post">
+
+      <!-- Sign-off -->
+      <div class="signoff">
+        <p>
+          That's it for this one.
+          <strong>{post.data.signoff}</strong>
+          {' '}Hit me up on <a href="https://www.linkedin.com/in/venkatesh-patnala-927a521b0" target="_blank" rel="noopener noreferrer">LinkedIn</a> or <a href="mailto:venkateshjnv123@gmail.com">email</a>.
+        </p>
+      </div>
+
+      <!-- Share row -->
+      <div class="share-row">
+        <span class="share-label">SHARE</span>
+        <a
+          href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodedURL}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="share-btn"
+        >
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6zM2 9h4v12H2z"/><circle cx="4" cy="4" r="2"/></svg>
+          linkedin
+        </a>
+        <a
+          href={`https://twitter.com/intent/tweet?url=${encodedURL}&text=${encodedTitle}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="share-btn"
+        >
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+          x / twitter
+        </a>
+        <button class="share-btn" id="copy-link-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          copy link
+        </button>
+      </div>
+
+      <!-- LinkedIn CTA -->
+      <div class="li-cta">
+        <p class="li-cta-text">Liked this? I cross-post everything I write to LinkedIn. Follow for the next one.</p>
+        <a
+          href="https://www.linkedin.com/in/venkatesh-patnala-927a521b0"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="li-cta-btn"
+        >
+          <svg viewBox="0 0 24 24" fill="currentColor" width="11" height="11"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6zM2 9h4v12H2z"/><circle cx="4" cy="4" r="2"/></svg>
+          follow on linkedin
+        </a>
+      </div>
+
+      <!-- Next / Previous -->
+      <div class="next-prev">
+        <div class={`nav-card ${!prevPost ? 'nav-card-empty' : ''}`}>
+          {prevPost ? (
+            <a href={`/writing/${prevPost.slug}`} class="nav-card-link">
+              <div class="nav-card-label">← previous · №{prevPost.data.id.padStart(3,'0')}</div>
+              <div class="nav-card-title">{prevPost.data.title}</div>
+            </a>
+          ) : (
+            <div class="nav-card-empty-text">no previous post</div>
+          )}
+        </div>
+        <div class={`nav-card nav-card-right ${!nextPost ? 'nav-card-empty' : ''}`}>
+          {nextPost ? (
+            <a href={`/writing/${nextPost.slug}`} class="nav-card-link">
+              <div class="nav-card-label nav-label-right">next · №{nextPost.data.id.padStart(3,'0')} →</div>
+              <div class="nav-card-title nav-title-right">{nextPost.data.title}</div>
+            </a>
+          ) : (
+            <div class="nav-card-empty-text">no next post yet · subscribe on LinkedIn for the next one</div>
+          )}
+        </div>
+      </div>
+
+      <!-- Related posts -->
+      {relatedPosts.length > 0 && (
+        <div class="related-card">
+          <h4 class="related-heading">
+            More on <em>{post.data.tags[0]}</em>
+          </h4>
+          <div class="related-list">
+            {relatedPosts.map(rp => (
+              <a href={`/writing/${rp.id}`} class="related-item">
+                <span class="related-num"><span class="num-sign-green">№</span>{rp.data.id.padStart(3,'0')}</span>
+                <span class="related-title">{rp.data.title}</span>
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+
+    </div>
+  </footer>
+
+</BaseLayout>
+
+<style>
+/* ─── Progress bar ──────────────────────────────────────── */
+.progress {
+  position: sticky;
+  top: 38px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: rgba(15, 76, 58, 0.08);
+  z-index: 99;
+}
+
+.progress-fill {
+  height: 100%;
+  background: #0F4C3A;
+  width: 0%;
+  transition: width 0.1s ease-out;
+}
+
+/* ─── Breadcrumbs ───────────────────────────────────────── */
+.breadcrumbs-wrap {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 2rem 2rem 0;
+}
+
+.breadcrumbs {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: #8A8A82;
+  letter-spacing: 0.04em;
+  display: flex;
+  align-items: center;
+}
+
+.bc-link {
+  color: #4A4A45;
+  transition: color 0.15s;
+}
+.bc-link:hover { color: #0F4C3A; }
+
+.bc-sep {
+  color: #C4C0B2;
+  margin: 0 8px;
+}
+
+.bc-current {
+  color: #0F4C3A;
+  font-weight: 500;
+}
+
+/* ─── Article Header ────────────────────────────────────── */
+.article-header {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.header-inner {
+  padding: 1.5rem 2rem 2rem;
+  border-bottom: 0.5px dashed #D9D5C7;
+}
+
+.post-id-line {
+  margin-bottom: 1rem;
+}
+
+.post-id {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: #C4583A;
+  letter-spacing: 0.08em;
+  font-weight: 500;
+}
+
+.post-id::before {
+  content: '';
+  display: inline-block;
+  width: 20px;
+  height: 1.5px;
+  background: #C4583A;
+  margin-right: 10px;
+  vertical-align: middle;
+}
+
+.post-h1 {
+  font-family: var(--font-serif);
+  font-size: 42px;
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: #1A1A17;
+  margin-bottom: 1.25rem;
+}
+
+.post-tagline {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 18px;
+  color: #4A4A45;
+  line-height: 1.45;
+  padding-left: 16px;
+  border-left: 3px solid #D69E2E;
+  margin-bottom: 2rem;
+}
+
+.post-meta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.author-block {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.author-avatar {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1.5px solid #1A1A17;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.author-avatar::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 1px dashed #0F4C3A;
+  opacity: 0.4;
+}
+
+.avatar-v {
+  font-family: var(--font-serif);
+  font-style: italic;
+  color: #0F4C3A;
+  font-size: 15px;
+}
+
+.author-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: #1A1A17;
+}
+
+.author-sub {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 12px;
+  color: #8A8A82;
+}
+
+.post-tags {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+/* ─── Article Body ──────────────────────────────────────── */
+.article-wrap {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.article {
+  font-family: var(--font-serif);
+  font-size: 18px;
+  line-height: 1.7;
+  color: #1A1A17;
+  padding: 2rem 2rem 3rem;
+}
+
+.article :global(p) { margin-bottom: 1.5rem; }
+
+.article :global(a) {
+  color: #0F4C3A;
+  border-bottom: 1px solid currentColor;
+  padding-bottom: 1px;
+}
+
+.article :global(strong) {
+  font-weight: 500;
+  color: #0F4C3A;
+}
+
+.article :global(em) {
+  font-style: italic;
+  color: #4A4A45;
+}
+
+.article :global(ul),
+.article :global(ol) {
+  margin: 0 0 1.5rem 1.5rem;
+  padding-left: 0.5rem;
+}
+
+.article :global(li) { margin-bottom: 0.5rem; }
+
+.article :global(h2) {
+  font-family: var(--font-serif);
+  font-size: 26px;
+  font-weight: 500;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  margin: 2.5rem 0 1rem;
+}
+
+.article :global(h2 em) {
+  font-style: italic;
+  color: #0F4C3A;
+}
+
+.article :global(h3) {
+  font-family: var(--font-serif);
+  font-size: 20px;
+  font-weight: 500;
+  margin: 1.75rem 0 0.75rem;
+}
+
+/* Inline code */
+.article :global(code:not([class*="language"])) {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  background: #FDF3D9;
+  color: #A17617;
+  padding: 1px 6px;
+  border-radius: 3px;
+  border-bottom: 1px solid rgba(214, 158, 46, 0.3);
+}
+
+/* Code blocks */
+.article :global(pre) {
+  background: #1A1A17;
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  margin: 1.5rem 0;
+  overflow-x: auto;
+}
+
+.article :global(pre code) {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: #F7F5EE;
+  line-height: 1.6;
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+/* ─── Article Footer ────────────────────────────────────── */
+.article-footer {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.footer-inner-post {
+  padding: 2rem;
+  border-top: 0.5px dashed #D9D5C7;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.signoff {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 16px;
+  color: #4A4A45;
+  line-height: 1.5;
+}
+
+.signoff :global(strong) {
+  color: #0F4C3A;
+  font-weight: 500;
+  font-style: normal;
+}
+
+.signoff :global(a) {
+  color: #0F4C3A;
+  border-bottom: 1px solid currentColor;
+}
+
+/* Share row */
+.share-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 1rem 1.25rem;
+  background: #FDFCF6;
+  border: 0.5px solid #D9D5C7;
+  border-radius: 8px;
+}
+
+.share-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: #8A8A82;
+  letter-spacing: 0.04em;
+}
+
+.share-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  background: transparent;
+  border: 0.5px solid #D9D5C7;
+  border-radius: 20px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: #4A4A45;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-decoration: none;
+}
+
+.share-btn:hover {
+  border-color: #0F4C3A;
+  color: #0F4C3A;
+}
+
+.share-btn svg {
+  width: 11px;
+  height: 11px;
+}
+
+/* LinkedIn CTA */
+.li-cta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 1.25rem 1.5rem;
+  background: #0F4C3A;
+  color: #F7F5EE;
+  border-radius: 10px;
+}
+
+.li-cta-text {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 15px;
+  line-height: 1.45;
+  max-width: 360px;
+  margin: 0;
+}
+
+.li-cta-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 16px;
+  background: #F7F5EE;
+  color: #0F4C3A;
+  border-radius: 6px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+
+.li-cta-btn:hover {
+  background: #D69E2E;
+  color: #1A1A17;
+}
+
+/* Next / Previous */
+.next-prev {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.nav-card {
+  padding: 1rem 1.25rem;
+  background: #FDFCF6;
+  border: 0.5px solid #D9D5C7;
+  border-radius: 8px;
+  transition: border-color 0.15s;
+}
+
+.nav-card:not(.nav-card-empty):hover {
+  border-color: #0F4C3A;
+}
+
+.nav-card-link {
+  display: block;
+}
+
+.nav-card-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: #8A8A82;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.nav-label-right { text-align: right; }
+
+.nav-card-title {
+  font-family: var(--font-serif);
+  font-size: 15px;
+  color: #1A1A17;
+  line-height: 1.3;
+  transition: color 0.15s;
+}
+
+.nav-title-right { text-align: right; }
+
+.nav-card-link:hover .nav-card-title { color: #0F4C3A; }
+
+.nav-card-empty-text {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 13px;
+  color: #C4C0B2;
+}
+
+/* Related posts */
+.related-card {
+  background: #F0EDE3;
+  border: 0.5px solid #D9D5C7;
+  border-radius: 10px;
+  padding: 1.5rem;
+  position: relative;
+}
+
+.related-card::before {
+  content: '~/related';
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: #8A8A82;
+  letter-spacing: 0.04em;
+}
+
+.related-heading {
+  font-family: var(--font-serif);
+  font-size: 18px;
+  font-weight: 400;
+  color: #1A1A17;
+  margin-bottom: 1rem;
+}
+
+.related-heading em {
+  font-style: italic;
+  color: #0F4C3A;
+}
+
+.related-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.related-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  transition: background 0.15s;
+}
+
+.related-item:hover { background: #F7F5EE; }
+.related-item:hover .related-title { color: #0F4C3A; }
+
+.related-num {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: #8A8A82;
+  white-space: nowrap;
+  padding-top: 2px;
+}
+
+.num-sign-green { color: #0F4C3A; }
+
+.related-title {
+  font-family: var(--font-serif);
+  font-size: 14px;
+  color: #1A1A17;
+  line-height: 1.3;
+  transition: color 0.15s;
+}
+
+/* ─── Responsive ────────────────────────────────────────── */
+@media (max-width: 700px) {
+  .post-h1 { font-size: 30px; }
+  .article { font-size: 17px; }
+  .article :global(h2) { font-size: 22px; }
+  .next-prev { grid-template-columns: 1fr; }
+  .post-meta-row { flex-direction: column; align-items: flex-start; gap: 1rem; }
+  .li-cta { flex-direction: column; align-items: flex-start; }
+  .breadcrumbs { font-size: 10px; }
+}
+</style>
+
+<script>
+// Reading progress bar
+const progressFill = document.getElementById('progress-fill');
+
+function updateProgress() {
+  if (!progressFill) return;
+  const scrollTop = window.scrollY;
+  const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+  const pct = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+  progressFill.style.width = `${Math.min(pct, 100)}%`;
+}
+
+let ticking = false;
+window.addEventListener('scroll', () => {
+  if (!ticking) {
+    requestAnimationFrame(() => {
+      updateProgress();
+      ticking = false;
+    });
+    ticking = true;
+  }
+});
+
+// Copy link
+const copyBtn = document.getElementById('copy-link-btn');
+const toast = document.getElementById('toast');
+
+copyBtn?.addEventListener('click', async () => {
+  try {
+    await navigator.clipboard.writeText(window.location.href);
+    if (toast) {
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2000);
+    }
+  } catch {
+    // fallback: silently fail
+  }
+});
+</script>

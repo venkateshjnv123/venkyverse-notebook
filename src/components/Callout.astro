@@ -1,0 +1,48 @@
+---
+interface Props {
+  type?: 'info' | 'warning' | 'success';
+  label?: string;
+}
+const { type = 'info', label } = Astro.props;
+---
+<div class={`callout callout-${type}`}>
+  {label && <span class="callout-label">{label}</span>}
+  <slot />
+</div>
+
+<style>
+.callout {
+  background: #FDFCF6;
+  border-left: 3px solid #0F4C3A;
+  border-radius: 0 8px 8px 0;
+  padding: 1rem 1.25rem;
+  margin: 1.5rem 0;
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.callout-warning {
+  border-left-color: #C4583A;
+  background: #FDF8F5;
+}
+
+.callout-success {
+  border-left-color: #1F7A5E;
+  background: #E6EFEA;
+}
+
+.callout-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #0F4C3A;
+  font-weight: 500;
+  margin-bottom: 4px;
+  display: block;
+}
+
+.callout-warning .callout-label { color: #C4583A; }
+.callout-success .callout-label { color: #1F7A5E; }
+</style>

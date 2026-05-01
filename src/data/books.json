@@ -1,0 +1,82 @@
+{
+  "books": [
+    {
+      "id": "atomic-habits",
+      "title": "Atomic Habits",
+      "author": "James Clear",
+      "cover": "https://firebasestorage.googleapis.com/v0/b/my-website-9842b.appspot.com/o/covers%2Fatomic-habits.jpg?alt=media"
+    },
+    {
+      "id": "the-alchemist",
+      "title": "The Alchemist",
+      "author": "Paulo Coelho",
+      "cover": "https://firebasestorage.googleapis.com/v0/b/my-website-9842b.appspot.com/o/covers%2Fthe-alchemist.jpg?alt=media"
+    },
+    {
+      "id": "almanack-naval-ravikant",
+      "title": "The Almanack of Naval Ravikant",
+      "author": "Eric Jorgenson",
+      "cover": "https://firebasestorage.googleapis.com/v0/b/my-website-9842b.appspot.com/o/covers%2Falmanack-naval-ravikant.jpg?alt=media"
+    },
+    {
+      "id": "the-silent-patient",
+      "title": "The Silent Patient",
+      "author": "Alex Michaelides",
+      "cover": "https://firebasestorage.googleapis.com/v0/b/my-website-9842b.appspot.com/o/covers%2Fthe-silent-patient.jpg?alt=media"
+    },
+    {
+      "id": "verity",
+      "title": "Verity",
+      "author": "Colleen Hoover",
+      "cover": "https://firebasestorage.googleapis.com/v0/b/my-website-9842b.appspot.com/o/covers%2Fverity.jpg?alt=media"
+    },
+    {
+      "id": "eat-that-frog",
+      "title": "Eat That Frog",
+      "author": "Brian Tracy",
+      "cover": "https://firebasestorage.googleapis.com/v0/b/my-website-9842b.appspot.com/o/covers%2Feat-that-frog.jpg?alt=media"
+    },
+    {
+      "id": "2-states",
+      "title": "2 States",
+      "author": "Chetan Bhagat",
+      "cover": "https://firebasestorage.googleapis.com/v0/b/my-website-9842b.appspot.com/o/covers%2F2-states.jpg?alt=media"
+    },
+    {
+      "id": "half-girlfriend",
+      "title": "Half Girlfriend",
+      "author": "Chetan Bhagat",
+      "cover": "https://firebasestorage.googleapis.com/v0/b/my-website-9842b.appspot.com/o/covers%2Fhalf-girlfriend.jpg?alt=media"
+    },
+    {
+      "id": "five-point-someone",
+      "title": "Five Point Someone",
+      "author": "Chetan Bhagat",
+      "cover": "https://firebasestorage.googleapis.com/v0/b/my-website-9842b.appspot.com/o/covers%2Ffive-point-someone.jpg?alt=media"
+    },
+    {
+      "id": "one-indian-girl",
+      "title": "One Indian Girl",
+      "author": "Chetan Bhagat",
+      "cover": "https://firebasestorage.googleapis.com/v0/b/my-website-9842b.appspot.com/o/covers%2Fone-indian-girl.jpg?alt=media"
+    },
+    {
+      "id": "revolution-2020",
+      "title": "Revolution 2020",
+      "author": "Chetan Bhagat",
+      "cover": "https://firebasestorage.googleapis.com/v0/b/my-website-9842b.appspot.com/o/covers%2Frevolution-2020.jpg?alt=media"
+    },
+    {
+      "id": "3-mistakes-of-my-life",
+      "title": "The 3 Mistakes of My Life",
+      "author": "Chetan Bhagat",
+      "cover": "https://firebasestorage.googleapis.com/v0/b/my-website-9842b.appspot.com/o/covers%2F3-mistakes-of-my-life.jpg?alt=media"
+    },
+    {
+      "id": "system-design-interview",
+      "title": "System Design Interview – An Insider's Guide",
+      "author": "Alex Xu",
+      "cover": "https://firebasestorage.googleapis.com/v0/b/my-website-9842b.appspot.com/o/covers%2Fsystem-design-interview.jpg?alt=media"
+    }
+  ]
+}

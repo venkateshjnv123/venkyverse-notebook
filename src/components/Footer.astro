@@ -1,0 +1,58 @@
+---
+---
+<footer>
+  <div class="footer-inner">
+    <span class="footer-copy">© 2026 · kept honest by production</span>
+    <div class="footer-links">
+      <a href="https://www.linkedin.com/in/venkatesh-patnala-927a521b0" target="_blank" rel="noopener noreferrer" class="footer-link">linkedin</a>
+      <a href="https://github.com/venkateshjnv123" target="_blank" rel="noopener noreferrer" class="footer-link">github</a>
+      <a href="mailto:venkateshjnv123@gmail.com" class="footer-link">email</a>
+      <a href="/rss.xml" class="footer-link">rss</a>
+    </div>
+  </div>
+</footer>
+
+<style>
+footer {
+  width: 100%;
+}
+
+.footer-inner {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 2rem;
+  border-top: 0.5px dashed #D9D5C7;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.footer-copy {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 12px;
+  color: #4A4A45;
+}
+
+.footer-links {
+  display: flex;
+  align-items: center;
+}
+
+.footer-link {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: #4A4A45;
+  margin-left: 1rem;
+  transition: color 0.15s;
+}
+
+.footer-link:hover {
+  color: #0F4C3A;
+}
+
+@media (max-width: 600px) {
+  .footer-inner { flex-direction: column; gap: 1rem; align-items: flex-start; }
+  .footer-link:first-child { margin-left: 0; }
+}
+</style>

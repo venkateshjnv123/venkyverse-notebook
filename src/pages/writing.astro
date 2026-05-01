@@ -1,0 +1,377 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+
+const allPosts = (await getCollection('blog', ({ data }) => !data.draft))
+  .sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+
+const recentPosts = allPosts.slice(0, 3);
+const earlierPosts = allPosts.slice(3);
+
+const totalTags = [...new Set(allPosts.flatMap(p => p.data.tags))].length;
+const oldestDate = allPosts.at(-1)?.data.date;
+const sinceLabel = oldestDate
+  ? oldestDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }).toLowerCase()
+  : '';
+
+function formatDate(date: Date) {
+  return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }).toLowerCase();
+}
+---
+<BaseLayout
+  title="Writing · Venkatesh Patnala"
+  description="Production bugs, system patterns, and engineering lessons. Notebook of a backend engineer."
+  activePage="writing"
+>
+
+  <!-- Page Header -->
+  <header class="archive-header">
+    <div class="header-inner">
+      <span class="kicker-line">
+        <span class="kicker-bar"></span>
+        THE NOTEBOOK · ARCHIVE
+      </span>
+      <h1 class="archive-h1">Everything I've written, <em>in one place.</em></h1>
+      <p class="archive-desc">Production bugs, system patterns, and lessons I keep coming back to. Cross-posted to LinkedIn — site is the canonical version.</p>
+      <div class="stats-line">
+        <span>{allPosts.length} entries</span>
+        <span class="stat-dot">·</span>
+        <span>{totalTags} tags</span>
+        <span class="stat-dot">·</span>
+        <span>since {sinceLabel}</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Recent Posts -->
+  <section class="recent-section">
+    <div class="section-inner">
+      <div class="section-label">RECENT</div>
+      <div class="post-list">
+        {recentPosts.map(post => (
+          <a href={`/writing/${post.id}`} class="post-row recent-post" data-tags={post.data.tags.join(' ')}>
+            <div class="post-num">
+              <span class="num-sign">№</span>{post.data.id.padStart(3, '0')}
+            </div>
+            <div class="post-body">
+              <div class="post-meta">
+                {post.data.tags.map(tag => (
+                  <span class={`tag-pill ${tag}`}>{tag}</span>
+                ))}
+                <span class="meta-sep">·</span>
+                <span class="meta-text">{post.data.readTime} min</span>
+                <span class="meta-sep">·</span>
+                <span class="meta-text">{formatDate(post.data.date)}</span>
+              </div>
+              <div class="post-title">{post.data.title}</div>
+              <div class="post-lesson">{post.data.tagline}</div>
+            </div>
+            <div class="post-arrow">→</div>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Earlier Posts -->
+  {earlierPosts.length > 0 && (
+    <>
+      <div class="divider-wrap">
+        <div class="archive-divider">
+          <span class="divider-label">EARLIER</span>
+        </div>
+      </div>
+
+      <section class="compact-section">
+        <div class="section-inner">
+          {earlierPosts.map(post => (
+            <a href={`/writing/${post.id}`} class="compact-post">
+              <div class="compact-num">
+                <span class="num-sign">№</span>{post.data.id.padStart(3, '0')}
+              </div>
+              <div class="compact-title">{post.data.title}</div>
+              <div class="compact-tags">
+                {post.data.tags.slice(0, 2).map(tag => (
+                  <span class={`tag-pill ${tag}`} style="font-size:10px;">{tag}</span>
+                ))}
+              </div>
+              <div class="compact-date">{formatDate(post.data.date)}</div>
+              <div class="compact-arrow">→</div>
+            </a>
+          ))}
+        </div>
+      </section>
+    </>
+  )}
+
+</BaseLayout>
+
+<style>
+/* ─── Header ────────────────────────────────────────────── */
+.archive-header {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 3rem 2rem 2rem;
+}
+
+.header-inner {
+  border-bottom: 0.5px dashed #D9D5C7;
+  padding-bottom: 1.5rem;
+}
+
+.kicker-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: #C4583A;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 0.75rem;
+}
+
+.kicker-bar {
+  display: inline-block;
+  width: 20px;
+  height: 1.5px;
+  background: #C4583A;
+  flex-shrink: 0;
+}
+
+.archive-h1 {
+  font-family: var(--font-serif);
+  font-size: 48px;
+  font-weight: 400;
+  line-height: 1.05;
+  letter-spacing: -0.025em;
+  color: #1A1A17;
+  margin-bottom: 1rem;
+}
+
+.archive-h1 em {
+  font-style: italic;
+  color: #0F4C3A;
+  position: relative;
+}
+
+.archive-h1 em::after {
+  content: '';
+  position: absolute;
+  left: -2px; right: -2px; bottom: 4px;
+  height: 10px;
+  background: #D69E2E;
+  opacity: 0.35;
+  z-index: -1;
+  border-radius: 2px;
+  transform: skewX(-4deg) rotate(-0.5deg);
+}
+
+.archive-desc {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 17px;
+  color: #4A4A45;
+  line-height: 1.55;
+  max-width: 600px;
+  margin-bottom: 1rem;
+}
+
+.stats-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: #8A8A82;
+  letter-spacing: 0.04em;
+}
+
+.stat-dot { color: #C4C0B2; }
+
+/* ─── Section wrapper ───────────────────────────────────── */
+.section-inner {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+/* ─── Recent ────────────────────────────────────────────── */
+.recent-section { padding: 1rem 0 0; }
+
+.section-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: #8A8A82;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 1rem;
+}
+
+.post-list { display: flex; flex-direction: column; }
+
+.post-row {
+  display: grid;
+  grid-template-columns: 60px 1fr auto;
+  gap: 1.5rem;
+  padding: 1.5rem 0;
+  border-bottom: 0.5px dashed #D9D5C7;
+  cursor: pointer;
+  transition: all 0.15s;
+  align-items: start;
+}
+
+.post-row:hover .post-title { color: #0F4C3A; }
+.post-row:hover .post-arrow { color: #0F4C3A; transform: translateX(3px); }
+
+.post-num {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: #8A8A82;
+  padding-top: 6px;
+}
+
+.num-sign { color: #0F4C3A; }
+
+.post-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+
+.meta-sep {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: #C4C0B2;
+}
+
+.meta-text {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: #8A8A82;
+}
+
+.post-title {
+  font-family: var(--font-serif);
+  font-size: 21px;
+  font-weight: 400;
+  line-height: 1.25;
+  color: #1A1A17;
+  transition: color 0.15s;
+}
+
+.post-lesson {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 14px;
+  color: #4A4A45;
+  padding-left: 12px;
+  border-left: 2px solid #D69E2E;
+  margin-top: 6px;
+  line-height: 1.5;
+}
+
+.post-arrow {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  color: #8A8A82;
+  padding-top: 14px;
+  transition: all 0.15s;
+}
+
+/* ─── Divider ───────────────────────────────────────────── */
+.divider-wrap {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 2rem 2rem 1rem;
+}
+
+.archive-divider {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.archive-divider::before,
+.archive-divider::after {
+  content: '';
+  flex: 1;
+  height: 0.5px;
+  background: #D9D5C7;
+}
+
+.divider-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  color: #8A8A82;
+  font-weight: 500;
+}
+
+/* ─── Compact ───────────────────────────────────────────── */
+.compact-section { padding: 0 0 3rem; }
+
+.compact-post {
+  display: grid;
+  grid-template-columns: 60px 1fr 120px 80px 30px;
+  gap: 1.5rem;
+  padding: 0.875rem 0;
+  border-bottom: 0.5px dashed #D9D5C7;
+  cursor: pointer;
+  align-items: center;
+  transition: background 0.15s;
+}
+
+.compact-post:hover { background: #FDFCF6; }
+.compact-post:hover .compact-title { color: #0F4C3A; }
+.compact-post:hover .compact-arrow { color: #0F4C3A; transform: translateX(2px); }
+
+.compact-num {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: #8A8A82;
+}
+
+.compact-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: #1A1A17;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color 0.15s;
+}
+
+.compact-tags {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.compact-date {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: #8A8A82;
+  text-align: right;
+}
+
+.compact-arrow {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: #8A8A82;
+  text-align: right;
+  transition: all 0.15s;
+}
+
+/* ─── Responsive ────────────────────────────────────────── */
+@media (max-width: 800px) {
+  .archive-h1 { font-size: 32px; }
+  .post-row { grid-template-columns: 1fr; gap: 0.5rem; }
+  .post-num, .post-arrow { display: none; }
+  .compact-post { grid-template-columns: 40px 1fr 50px 20px; gap: 0.75rem; }
+  .compact-tags { display: none; }
+}
+</style>

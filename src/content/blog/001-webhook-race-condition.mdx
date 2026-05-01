@@ -1,0 +1,85 @@
+---
+id: "001"
+title: "the user uploaded image B, saw image A, and filed a ticket"
+tagline: "Order of uploads ≠ order of webhook arrival. Distributed systems are fun, until time starts lying to you."
+tags: ['prod-bug', 'system-design']
+date: 2026-04-01
+readTime: 4
+linkedin_url: ""
+draft: false
+signoff: "How did you handle out-of-order webhooks in your system?"
+---
+
+import Callout from '../../components/Callout.astro'
+import Aside from '../../components/Aside.astro'
+
+We had a weird bug in prod.
+
+A user uploaded a car image, didn't like it, reuploaded a different one — and still saw the old one. Filed a ticket. We went in to investigate, and the system logs looked completely normal. The right image existed in storage. The URL in the database pointed to the new image. Everything *looked* fine.
+
+Except the user was seeing the wrong thing.
+
+## The setup
+
+Our image upload flow at Cars24 worked like this:
+
+1. User selects image on the frontend
+2. Frontend uploads directly to cloud storage
+3. Storage fires a webhook to our backend on upload completion
+4. Backend receives webhook, updates the database record
+5. Frontend polls or re-fetches to show the updated image
+
+Simple enough. For a single upload, this works perfectly. The trouble started when users uploaded *twice in quick succession* — which happens constantly when someone isn't happy with the first shot.
+
+## What went wrong
+
+User uploads Image A. A moment later, they discard it and upload Image B.
+
+Here's what we *expected*: webhook for A arrives, then webhook for B arrives. Database updates to A, then overwrites to B. Final state: B. Correct.
+
+Here's what actually happened: webhook for B arrived *first*. Then webhook for A arrived. Database updated to B, then overwrote to A. Final state: A. Wrong.
+
+```
+Timeline (expected):
+upload A → upload B → webhook A → webhook B → DB = B ✅
+
+Timeline (actual):
+upload A → upload B → webhook B → webhook A → DB = A ❌
+```
+
+B was smaller. B's upload finished faster. B's webhook arrived first. Nothing wrong with the system — just physics.
+
+<Callout type="warning" label="The mental model trap">
+The order in which uploads happen is not the order in which the resulting webhooks arrive. Network latency, file size, server load — all of these can invert delivery order.
+</Callout>
+
+## The root cause
+
+We were treating webhooks as *ordered events* when they are fundamentally *unordered notifications*. Our webhook handler did a naive `UPDATE image_url = $newUrl WHERE car_id = $id`. Last write wins. Which in a race condition means: wrong write wins.
+
+## The fix
+
+We added a monotonic `uploaded_at` timestamp to each upload, included it in the webhook payload, and changed the update query:
+
+```sql
+UPDATE car_images
+SET image_url = $newUrl, uploaded_at = $uploadedAt
+WHERE car_id = $carId
+  AND ($uploadedAt > uploaded_at OR uploaded_at IS NULL)
+```
+
+Only update if the incoming event is *newer* than what we currently have. The database becomes the arbiter of "latest."
+
+<Aside>
+A small tangent: this is also why I prefer version numbers over timestamps when you control both sides. Clocks lie. Sequence numbers don't.
+</Aside>
+
+## What I'd do differently next time
+
+I'd bake this check into the webhook handler as a default assumption rather than adding it post-incident. Any time you have a system where multiple events can affect the same record out of order, the handler should ask: "is this newer than what I know?"
+
+The cost is one extra column and one extra WHERE clause. The benefit is never debugging this class of bug again.
+
+<Callout type="info" label="The takeaway">
+Distributed systems don't give you ordering guarantees for free. If your handler assumes events arrive in the order they were created, you have a latent bug waiting for the right conditions to surface.
+</Callout>

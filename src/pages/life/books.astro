@@ -1,0 +1,215 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import booksData from '../../data/books.json';
+
+const { books } = booksData;
+---
+<BaseLayout
+  title="Books · Venkatesh Patnala"
+  description="Books I've read — covers and authors. Reviews coming later."
+  activePage="life"
+>
+
+  <!-- Breadcrumb -->
+  <div class="breadcrumb-wrap">
+    <div class="breadcrumb">
+      <span class="crumb-tilde">~</span>
+      <span class="crumb-sep"> / </span>
+      <a href="/life" class="crumb-link">life</a>
+      <span class="crumb-sep"> / </span>
+      <span class="crumb-current">books</span>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <header class="books-header">
+    <div class="header-inner">
+      <span class="kicker-line">BOOKS · {books.length} SO FAR</span>
+      <h1 class="hero-h1">The <em>bookshelf.</em></h1>
+      <p class="hero-desc">{books.length} books · just covers for now, reviews later.</p>
+    </div>
+  </header>
+
+  <!-- Grid -->
+  <section class="shelf-section">
+    <div class="shelf-inner">
+      <div class="bookshelf">
+        {books.map(book => (
+          <div class="book">
+            <div class={`book__cover${!book.cover ? ' book__cover--placeholder' : ''}`}>
+              {book.cover
+                ? <img src={book.cover} alt={book.title} loading="lazy" />
+                : <span>{book.title.split(' ').slice(0, 3).join(' ')}</span>
+              }
+            </div>
+            <p class="book__title">{book.title}</p>
+            <p class="book__author">{book.author}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+</BaseLayout>
+
+<style>
+/* ─── Breadcrumb ──────────────────────────────────────────── */
+.breadcrumb-wrap {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 2rem 2rem 0;
+}
+
+.breadcrumb {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: #8A8A82;
+  letter-spacing: 0.04em;
+}
+
+.crumb-tilde { color: #8A8A82; }
+.crumb-sep { color: #C4C0B2; }
+.crumb-link { color: #4A4A45; transition: color 0.15s; }
+.crumb-link:hover { color: #0F4C3A; }
+.crumb-current { color: #0F4C3A; font-weight: 500; }
+
+/* ─── Header ──────────────────────────────────────────────── */
+.books-header {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 1.5rem 2rem 2rem;
+}
+
+.header-inner {
+  border-bottom: 0.5px dashed #D9D5C7;
+  padding-bottom: 1.5rem;
+}
+
+.kicker-line {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: #C4583A;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 0.75rem;
+}
+
+.hero-h1 {
+  font-family: var(--font-serif);
+  font-size: 42px;
+  font-weight: 400;
+  line-height: 1.05;
+  letter-spacing: -0.025em;
+  color: #1A1A17;
+  margin-bottom: 0.75rem;
+}
+
+.hero-h1 em {
+  font-style: italic;
+  color: #0F4C3A;
+  position: relative;
+}
+
+.hero-h1 em::after {
+  content: '';
+  position: absolute;
+  left: -2px; right: -2px; bottom: 4px;
+  height: 10px;
+  background: #D69E2E;
+  opacity: 0.35;
+  z-index: -1;
+  border-radius: 2px;
+  transform: skewX(-4deg) rotate(-0.5deg);
+}
+
+.hero-desc {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 15px;
+  color: #8A8A82;
+  line-height: 1.55;
+}
+
+/* ─── Bookshelf grid ──────────────────────────────────────── */
+.shelf-section { padding-bottom: 4rem; }
+
+.shelf-inner {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+.bookshelf {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 2.5rem 1.75rem;
+  padding: 3rem 0;
+}
+
+.book {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.book__cover {
+  aspect-ratio: 2 / 3;
+  background: var(--paper-deep);
+  border: 1px solid rgba(15, 76, 58, 0.1);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.06),
+    0 8px 20px rgba(15, 76, 58, 0.08);
+  overflow: hidden;
+  border-radius: 2px;
+  transform: rotate(-0.4deg);
+  transition: transform 0.2s ease;
+}
+
+.book:hover .book__cover {
+  transform: rotate(0deg) translateY(-2px);
+}
+
+.book__cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.book__cover--placeholder {
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, var(--paper-deep), var(--green-soft));
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 0.85rem;
+  color: var(--green-sig);
+  text-align: center;
+  padding: 1rem;
+  line-height: 1.4;
+}
+
+.book__title {
+  font-family: var(--font-serif);
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--ink);
+  line-height: 1.3;
+  margin: 0;
+}
+
+.book__author {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 0.82rem;
+  color: var(--ink-muted);
+  margin: 0;
+}
+
+/* ─── Responsive ──────────────────────────────────────────── */
+@media (max-width: 700px) {
+  .hero-h1 { font-size: 30px; }
+  .bookshelf { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 2rem 1.25rem; }
+}
+</style>

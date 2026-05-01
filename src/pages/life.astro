@@ -1,0 +1,441 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import currently from '../data/currently.json';
+import booksData from '../data/books.json';
+import tripsData from '../data/trips.json';
+---
+<BaseLayout
+  title="Life · Venkatesh Patnala"
+  description="What I'm building, what I've read, where I've been. The notebook outside engineering."
+  activePage="life"
+>
+
+  <!-- Header -->
+  <header class="life-header">
+    <div class="header-inner">
+      <span class="kicker-line">~/LIFE</span>
+      <h1 class="hero-h1">Beyond the <em>IDE.</em></h1>
+      <p class="hero-desc">What I'm building, what I'm reading, where I've been. Not curated for cleverness — just an honest log of the things outside engineering that take up space in my head.</p>
+    </div>
+  </header>
+
+  <!-- Currently building -->
+  <section class="currently">
+    <div class="currently-inner">
+      <div class="currently__stack">
+        <div class="currently__sheet currently__sheet--3" aria-hidden="true"></div>
+        <div class="currently__sheet currently__sheet--2" aria-hidden="true"></div>
+        <article class="currently__sheet currently__sheet--1">
+          <header class="currently__head">
+            <span class="currently__label">currently</span>
+            <span class="currently__date">{currently.since}</span>
+          </header>
+          <h2 class="currently__title">
+            {currently.kind} <em>{currently.title}</em>
+          </h2>
+          <p class="currently__subtitle">{currently.subtitle}</p>
+          <a href="/journey" class="currently__link">what I'm shipping →</a>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- Books -->
+  <section class="books-section">
+    <div class="books-inner">
+      <div class="section-heading">
+        <div>
+          <div class="section-kicker">BOOKS · {booksData.books.length} SO FAR</div>
+          <h2 class="section-h2">What I've <em>read.</em></h2>
+        </div>
+        <a class="section-link" href="/life/books">view full shelf →</a>
+      </div>
+
+      <div class="book-grid">
+        {booksData.books.slice(0, 5).map(book => (
+          <a href="/life/books" class="book-card">
+            <div class={`book-card__cover${!book.cover ? ' book-card__cover--placeholder' : ''}`}>
+              {book.cover
+                ? <img src={book.cover} alt={book.title} loading="lazy" />
+                : <span>{book.title.split(' ').slice(0, 2).join(' ')}</span>
+              }
+            </div>
+            <p class="book-card__title">{book.title}</p>
+            <p class="book-card__author">{book.author}</p>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Trips -->
+  <section class="trips-section">
+    <div class="trips-inner">
+      <div class="section-heading">
+        <div>
+          <div class="section-kicker">TRIPS · {tripsData.trips.length} JOURNEYS</div>
+          <h2 class="section-h2">Where I've <em>been.</em></h2>
+        </div>
+        <span class="section-link-soon">write-ups later</span>
+      </div>
+
+      <div class="trips-grid">
+        {tripsData.trips.map((trip, i) => (
+          <article class="trip-card" style={`--rot: ${['-0.3deg','0.3deg','-0.5deg','0.2deg','-0.4deg','0.5deg','-0.2deg','0.4deg','-0.6deg','0.3deg'][i % 10]}`}>
+            <span class="trip-card__date">{trip.displayDate}</span>
+            <h3 class="trip-card__places">{trip.places.join(' · ')}</h3>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+
+</BaseLayout>
+
+<style>
+/* ─── Header ──────────────────────────────────────────────── */
+.life-header {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 3rem 2rem 2rem;
+}
+
+.header-inner {
+  border-bottom: 0.5px dashed #D9D5C7;
+  padding-bottom: 1.5rem;
+}
+
+.kicker-line {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: #C4583A;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 0.75rem;
+}
+
+.hero-h1 {
+  font-family: var(--font-serif);
+  font-size: 48px;
+  font-weight: 400;
+  line-height: 1.05;
+  letter-spacing: -0.025em;
+  color: #1A1A17;
+  margin-bottom: 1rem;
+}
+
+.hero-h1 em {
+  font-style: italic;
+  color: #0F4C3A;
+  position: relative;
+}
+
+.hero-h1 em::after {
+  content: '';
+  position: absolute;
+  left: -2px; right: -2px; bottom: 4px;
+  height: 10px;
+  background: #D69E2E;
+  opacity: 0.35;
+  z-index: -1;
+  border-radius: 2px;
+  transform: skewX(-4deg) rotate(-0.5deg);
+}
+
+.hero-desc {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 17px;
+  color: #4A4A45;
+  line-height: 1.55;
+  max-width: 600px;
+}
+
+/* ─── Currently ───────────────────────────────────────────── */
+.currently { padding: 3rem 0 2rem; }
+
+.currently-inner {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+.currently__stack {
+  position: relative;
+  max-width: 560px;
+}
+
+.currently__sheet {
+  background: #F0EDE3;
+  border: 1px solid rgba(15, 76, 58, 0.08);
+  border-radius: 2px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  padding: 2.5rem 2.25rem;
+}
+
+.currently__sheet--1 {
+  position: relative;
+  z-index: 3;
+  transform: rotate(-0.4deg);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.06),
+    0 8px 24px rgba(15, 76, 58, 0.08);
+}
+
+.currently__sheet--2 {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  transform: rotate(0.8deg) translate(6px, 8px);
+  background: #ECE9DD;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.currently__sheet--3 {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  transform: rotate(-1.2deg) translate(-4px, 14px);
+  background: #E5E1D2;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.currently__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px dashed rgba(15, 76, 58, 0.2);
+}
+
+.currently__label {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #0F4C3A;
+}
+
+.currently__date {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: #8A8A82;
+}
+
+.currently__title {
+  font-family: var(--font-serif);
+  font-size: 1.5rem;
+  font-weight: 400;
+  margin: 0 0 0.5rem;
+  color: #1A1A17;
+}
+
+.currently__title em {
+  color: #0F4C3A;
+  font-style: italic;
+  font-weight: 400;
+}
+
+.currently__subtitle {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 1.05rem;
+  color: #8A8A82;
+  line-height: 1.5;
+  margin: 0 0 1.5rem;
+}
+
+.currently__link {
+  font-size: 0.85rem;
+  color: #0F4C3A;
+  border-bottom: 1px solid currentColor;
+  padding-bottom: 1px;
+  transition: color 0.15s;
+  font-family: var(--font-mono);
+}
+
+.currently__link:hover { color: #C4583A; }
+
+/* ─── Shared section chrome ───────────────────────────────── */
+.section-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.section-kicker {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: #C4583A;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+}
+
+.section-link {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: #0F4C3A;
+  font-weight: 500;
+  border-bottom: 1px solid currentColor;
+  padding-bottom: 1px;
+  white-space: nowrap;
+  transition: opacity 0.15s;
+}
+.section-link:hover { opacity: 0.7; }
+
+.section-link-soon {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 12px;
+  color: #8A8A82;
+  white-space: nowrap;
+}
+
+/* ─── Books ───────────────────────────────────────────────── */
+.books-section {
+  padding: 3rem 0 1rem;
+  border-top: 0.5px dashed #D9D5C7;
+}
+
+.books-inner {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+.book-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 1.5rem;
+}
+
+.book-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.book-card__cover {
+  aspect-ratio: 2 / 3;
+  background: var(--paper-deep);
+  border: 1px solid rgba(15, 76, 58, 0.1);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.06), 0 6px 16px rgba(15,76,58,0.07);
+  overflow: hidden;
+  border-radius: 2px;
+  transform: rotate(-0.4deg);
+  transition: transform 0.2s ease;
+}
+
+.book-card:hover .book-card__cover {
+  transform: rotate(0deg) translateY(-2px);
+}
+
+.book-card__cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.book-card__cover--placeholder {
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, var(--paper-deep), var(--green-soft));
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 0.78rem;
+  color: var(--green-sig);
+  text-align: center;
+  padding: 0.75rem;
+  line-height: 1.4;
+}
+
+.book-card__title {
+  font-family: var(--font-serif);
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--ink);
+  line-height: 1.3;
+  margin: 0;
+}
+
+.book-card__author {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 0.78rem;
+  color: var(--ink-muted);
+  margin: 0;
+}
+
+/* ─── Trips ───────────────────────────────────────────────── */
+.trips-section {
+  padding: 3rem 0 4rem;
+  border-top: 0.5px dashed #D9D5C7;
+}
+
+.trips-inner {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+.trips-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+  padding: 1rem 0;
+}
+
+.trip-card {
+  background: var(--paper-deep);
+  border: 1px solid rgba(15, 76, 58, 0.1);
+  border-radius: 2px;
+  padding: 1.25rem 1.25rem 1.5rem;
+  transform: rotate(var(--rot, -0.3deg));
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.trip-card:hover {
+  transform: rotate(0deg) translateY(-2px);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.06), 0 6px 16px rgba(15,76,58,0.1);
+}
+
+.trip-card__date {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #C4583A;
+  margin-bottom: 0.6rem;
+}
+
+.trip-card__places {
+  font-family: var(--font-serif);
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: var(--ink);
+  margin: 0;
+  line-height: 1.3;
+}
+
+/* ─── Responsive ──────────────────────────────────────────── */
+@media (max-width: 800px) {
+  .hero-h1 { font-size: 32px; }
+  .book-grid { grid-template-columns: repeat(3, 1fr); }
+  .section-heading { flex-direction: column; align-items: flex-start; }
+}
+
+@media (max-width: 500px) {
+  .book-grid { grid-template-columns: repeat(2, 1fr); }
+  .trips-grid { grid-template-columns: repeat(2, 1fr); }
+}
+</style>

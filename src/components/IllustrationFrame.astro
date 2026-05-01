@@ -1,0 +1,100 @@
+---
+interface Props {
+  variant?: 'default' | 'circle';
+  alt?: string;
+  caption?: string;
+  src?: string;
+}
+const {
+  variant = 'default',
+  alt = 'Watercolor illustration of Venkatesh, sketched by AI',
+  caption = 'sketched by AI · along a river',
+  src = '/venkatesh-illustration.png',
+} = Astro.props;
+---
+<figure class={`illustration-frame${variant === 'circle' ? ' illustration-frame--circle' : ''}`}>
+  {variant !== 'circle' && (
+    <>
+      <span class="tape tape--tl" aria-hidden="true"></span>
+      <span class="tape tape--br" aria-hidden="true"></span>
+    </>
+  )}
+  <img src={src} alt={alt} class="illustration-frame__img" loading="lazy" />
+  {variant !== 'circle' && caption && (
+    <figcaption class="illustration-frame__caption">{caption}</figcaption>
+  )}
+</figure>
+
+<style>
+.illustration-frame {
+  position: relative;
+  display: inline-block;
+  padding: 1rem;
+  margin: 0;
+  transform: rotate(-0.5deg);
+  background: var(--color-paper);
+  border: 1.5px dashed rgba(15, 76, 58, 0.4);
+  border-radius: 2px;
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.04),
+    0 12px 32px rgba(15, 76, 58, 0.08);
+  max-width: 320px;
+}
+
+.illustration-frame__img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 1px;
+}
+
+.illustration-frame__caption {
+  margin-top: 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--color-ink-mute);
+  text-align: center;
+  letter-spacing: 0.02em;
+  opacity: 0.7;
+}
+
+.tape {
+  position: absolute;
+  width: 64px;
+  height: 18px;
+  background: rgba(214, 158, 46, 0.55);
+  border-left: 1px solid rgba(214, 158, 46, 0.3);
+  border-right: 1px solid rgba(214, 158, 46, 0.3);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  z-index: 2;
+}
+
+.tape--tl {
+  top: -8px;
+  left: -12px;
+  transform: rotate(-22deg);
+}
+
+.tape--br {
+  bottom: -8px;
+  right: -12px;
+  transform: rotate(-22deg);
+}
+
+.illustration-frame--circle {
+  width: 80px;
+  height: 80px;
+  padding: 4px;
+  border-radius: 50%;
+  transform: rotate(0deg);
+  max-width: none;
+}
+
+.illustration-frame--circle .illustration-frame__img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: top;
+}
+</style>

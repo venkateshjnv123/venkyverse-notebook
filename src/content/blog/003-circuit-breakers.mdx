@@ -1,0 +1,69 @@
+---
+id: "003"
+title: "circuit breakers alone won't save you"
+tagline: "Resilience is a stack, not a switch. Timeouts + breakers + ramp-up — three layers, one pattern."
+tags: ['system-design']
+date: 2026-02-10
+readTime: 5
+linkedin_url: ""
+draft: false
+signoff: "What's your resilience stack look like? Do you run circuit breakers, and have they ever saved you?"
+---
+
+import Callout from '../../components/Callout.astro'
+import Aside from '../../components/Aside.astro'
+
+Everyone learns about circuit breakers and feels protected. I did too. Then we had an incident that a circuit breaker couldn't prevent — because the problem wasn't that we were calling a failing service. The problem was that we were *waiting too long* before we knew it was failing.
+
+## The pattern people know
+
+A circuit breaker watches for failures. After N consecutive failures, it opens the circuit and starts returning errors immediately without attempting the call. After a timeout, it lets one request through to test if the dependency recovered. If it succeeds, the circuit closes.
+
+Clean. Elegant. Widely taught.
+
+Here's what's missing from the standard explanation: **the circuit breaker can only open after failures accumulate**. If your calls are timing out slowly — say, hanging for 30 seconds each — you can accumulate 60 seconds of blocked threads before the circuit trips. By then, your connection pool is exhausted and your entire service is degraded.
+
+## The incident
+
+We called an upstream pricing service from our vehicle detail page. That service had a 30-second default timeout on our HTTP client. On a bad day, that service started responding slowly — not failing, just slow.
+
+Our circuit breaker was configured to trip after 5 consecutive failures. But these weren't *failures*. They were *slow successes* — responses arriving after 25–28 seconds. No exceptions thrown, no errors recorded. Just threads sitting open, waiting.
+
+10 concurrent requests × 28-second wait = 280 thread-seconds of capacity burned per burst. Thread pool depleted. Response times across the service started climbing. Users saw timeouts on pages that had nothing to do with pricing.
+
+<Callout type="warning" label="The lesson the hard way">
+A slow dependency is more dangerous than a fast-failing one. Fast failures trip your circuit breaker. Slow responses drain your resources while everything looks green on your metrics.
+</Callout>
+
+## The resilience stack
+
+After this incident, I started thinking about resilience as three layers that work together, not alternatives:
+
+**Layer 1: Timeouts**
+Every external call needs an aggressive timeout. Not the framework default, not "whatever feels safe" — a number you calculated based on acceptable latency for your users. If a call hasn't returned in 300ms (or 1s, or whatever your SLA is), kill it. Fast failure > slow success.
+
+**Layer 2: Circuit breakers**
+Now that you have timeouts, failures accumulate *quickly* when a dependency is down. Circuit breakers prevent you from hammering a degraded service and let you fail fast. But configure them on timeouts too, not just exceptions.
+
+**Layer 3: Traffic ramp-up**
+When a circuit closes (dependency recovered), don't immediately send full traffic. Send 10%, watch your error rate, send 25%, etc. A service that just recovered is fragile. Sending it a sudden burst often kills it again.
+
+```
+Request → [Timeout: 500ms] → [Circuit Breaker] → Dependency
+                                    ↓
+                         [Ramp-up on recovery]
+```
+
+<Aside>
+Most teams implement layer 2 and skip layers 1 and 3. Layer 1 is the most impactful per line of code. One timeout config saves you from the "slow drain" failure mode entirely.
+</Aside>
+
+## The fix
+
+We set a 500ms timeout on the pricing service client. Changed the circuit breaker to also count timeout events (not just exceptions) as failures. Added a 10% ramp-up on circuit close.
+
+Our next bad-dependency day was boring. Pricing calls failed fast, the circuit tripped after 5 fast failures, vehicle detail pages showed a "price unavailable" fallback, and nothing else was affected.
+
+<Callout type="success" label="The pattern that works">
+Timeouts make your failures fast. Circuit breakers prevent you from calling a broken service. Traffic ramp-up protects recovering services. All three, in sequence.
+</Callout>

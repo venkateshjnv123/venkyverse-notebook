@@ -1,0 +1,83 @@
+---
+id: "002"
+title: "we shipped a feature with AI. then production started breathing fire 🔥"
+tagline: "AI generates working code. Working ≠ production-ready. The critical read is still ours."
+tags: ['ai', 'prod-bug']
+date: 2026-03-15
+readTime: 6
+linkedin_url: ""
+draft: false
+signoff: "Have you shipped AI-generated code that bit you in prod? What did you miss in the review?"
+---
+
+import Callout from '../../components/Callout.astro'
+import Aside from '../../components/Aside.astro'
+
+The code worked. I ran it locally. The unit tests passed. Claude wrote 80% of it and I wrote the rest. We reviewed it as a team. We shipped on a Friday afternoon.
+
+By Friday evening, our error rate had tripled.
+
+## The feature
+
+We were building a bulk price-update API for car listings. Dealers needed to update prices on 50–200 listings in a single request. The old flow required one API call per listing. Painful. We were fixing it.
+
+I asked Claude to generate the bulk update logic. It produced clean, readable code with proper error handling. Each listing update wrapped in a transaction, errors collected and returned, successful updates committed. Exactly what I asked for.
+
+What I didn't ask for — and didn't think to ask for — was what happens at scale.
+
+## What went wrong
+
+The AI-generated code opened a database connection per listing in the loop.
+
+```python
+for listing_id in listing_ids:
+    with db.transaction():
+        update_listing(listing_id, new_price)
+```
+
+For 50 listings: 50 connections opened, 50 transactions, 50 connections closed. Our connection pool had a ceiling of 20. At peak load, with multiple dealers running bulk updates simultaneously, we exhausted the pool in seconds.
+
+The rest of the system — which shared that pool — started timing out. Authentication checks. Inventory reads. Everything.
+
+Error rate tripled because the problem wasn't in bulk update at all. It was in every other API call that couldn't get a connection.
+
+<Callout type="warning" label="The sneaky failure mode">
+The feature that caused the outage didn't fail. Everything else did. This is the hardest class of production bug to anticipate — the feature looks fine, the blast radius is somewhere you're not looking.
+</Callout>
+
+## Why we missed it
+
+The code was *correct*. It did exactly what was specified. Every listing updated, errors surfaced, rollbacks worked. If you reviewed it for functional correctness, it passed.
+
+What we didn't review for:
+- Connection pool behavior under concurrent load
+- What happens when 10 dealers all run bulk update at the same time
+- The second-order effects on shared infrastructure
+
+AI doesn't model your production environment. It models the problem you described. Those are different things.
+
+## The fix
+
+We rewrote to batch the updates into a single transaction with a single connection:
+
+```python
+with db.transaction() as conn:
+    for listing_id in listing_ids:
+        update_listing_with_conn(conn, listing_id, new_price)
+```
+
+One connection. One transaction. Atomic across all listings. And we added a `max_batch_size` guard to reject requests over 100 listings with a clear error message.
+
+<Aside>
+We also added connection pool monitoring to our dashboards after this. Obvious in hindsight. It's never on the dashboard until it bites you.
+</Aside>
+
+## What I'd do differently
+
+I'd add "connection pool implications" to my AI code review checklist. And I'd load test any feature that touches shared infrastructure before shipping — not after.
+
+The AI wrote exactly what I asked for. I just didn't ask the right questions.
+
+<Callout type="info" label="The takeaway">
+AI generates code that solves the stated problem. It doesn't model your production topology, your connection pool limits, or your concurrent load profile. That context is yours to bring — and yours to verify.
+</Callout>
