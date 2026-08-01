@@ -1,79 +1,63 @@
 ---
 id: "004"
-title: "half our events just… vanished"
+title: "Half Our Events Just Vanished"
 tagline: "AI writes the code. Architecture decisions are still on you."
-tags: ['ai']
+tags: ['prod-bug', 'ai', 'system-design']
 date: 2026-01-20
-readTime: 4
+readTime: 3
 linkedin_url: ""
+hero_image: ""
 draft: false
-signoff: "Have you had an AI-suggested architecture decision that looked right but was missing something critical?"
+signoff: "Have you had AI-generated architecture that looked right but was missing something critical?"
 ---
 
-import Callout from '../../components/Callout.astro'
-import Aside from '../../components/Aside.astro'
 
-We asked Claude to help us design a RabbitMQ setup for our vehicle event pipeline. The suggestion was clean and sensible: one exchange, one queue, one consumer group. It handled our stated requirements perfectly.
+Half our production events were lost — because of one small mistake. 😅
 
-We ran it for a week. Then we noticed our analytics were off. Vehicle view events were missing. About half of them.
+I used Codex to consume RabbitMQ events from another service. Gave it full context + both repos. It generated clean, working code. Local testing? ✅ Perfect.
 
-## The setup
+Then production happened. Some events were processed. Some just... vanished. No errors, no crashes. Just missing data.
 
-Our event pipeline ingests vehicle-related events: views, searches, price changes, inquiries. These feed into analytics, recommendation models, and dealer dashboards. High volume — tens of thousands of events per hour at peak.
+## What went wrong
 
-I described this to Claude and asked for a RabbitMQ topology. It suggested:
+Both services were consuming from the **same queue**.
 
-```
-Exchange: vehicle_events (topic)
-Queue: events_processing
-Binding: vehicle_events → events_processing (routing key: #)
-Consumers: 3 instances
-```
+In RabbitMQ, a single queue distributes messages between consumers — it doesn't duplicate them. So instead of both services getting all events, they were unknowingly **splitting the load**.
 
-Reasonable. One queue, multiple consumers competing for messages, even load distribution. I implemented it, we deployed, life was good.
+![Wrong: two services sharing one queue. Right: each service with its own queue, same exchange.](/images/rabbitmq-shared-queue.png)
 
-## What vanished and why
-
-The problem wasn't the queue. It was that we had two fundamentally different consumers pulling from the same queue:
-
-1. **Analytics consumer**: needs *every* event, writes to a data warehouse
-2. **Real-time consumer**: needs *recent* events, updates live dealer dashboards
-
-With competing consumers on a single queue, each message is delivered to exactly one consumer. The analytics consumer and the real-time consumer were splitting the events between them. Analytics was seeing ~50% of events, real-time was seeing the other 50%.
-
-Neither failed. Both appeared healthy. We just had silent data loss.
+Analytics was seeing ~50% of events. Real-time dashboards were seeing the other 50%. Neither failed. Both appeared healthy. Silent data loss.
 
 <Callout type="warning" label="The gap">
-Competing consumers (multiple instances of the same consumer) is a horizontal scaling pattern. Multiple *different* consumers that each need all events is a pub/sub pattern. These require different topologies.
+Competing consumers (multiple instances of the same service) is a horizontal scaling pattern. Multiple *different* consumers that each need all events is a pub/sub pattern. These require different topologies.
 </Callout>
 
-## The architecture Claude didn't know to ask about
+## The correct setup
 
-When I described "multiple consumers" I meant "multiple instances for throughput." What I should have clarified — and what Claude had no way to infer — was whether different consumers needed independent copies of each message.
-
-The correct RabbitMQ topology for our case:
+Each service should have its **own queue**, bound to the same exchange with the same routing key:
 
 ```
 Exchange: vehicle_events (topic)
 
-Queue: analytics_events     ← bound to exchange, 3 consumer instances
-Queue: realtime_events      ← bound to exchange, 3 consumer instances
+Queue: analytics_events   ← Service A consumes
+Queue: realtime_events    ← Service B consumes
 
-Each message → copied to BOTH queues by the exchange
-Each queue → consumed independently
+Same routing key → exchange fans out to both queues
+✅ Every service gets every event
 ```
 
-Two queues, same exchange. Each message fan-out to both. Each consumer group gets every event.
+Event hits exchange → routed to multiple queues → each service consumes independently.
 
 ## What I'd do differently
 
-Before accepting an AI-suggested architecture, I'd write out the data flow requirements explicitly:
+Before accepting AI-suggested architecture, write out the data flow requirements explicitly:
+
 - Who needs to receive each message?
-- Does each consumer need an independent copy, or are they competing instances?
+- Does each consumer need an independent copy, or are they competing instances for scale?
 - What happens if one consumer is slow — does it affect others?
 
-These questions reveal whether you need competing consumers (scale) or independent queues (fan-out). Claude can design either pattern — but you have to tell it which one you need.
+These questions reveal whether you need competing consumers (scale) or independent queues (fan-out). AI can design either pattern — but you have to tell it which one you need.
 
 <Callout type="info" label="The takeaway">
-AI-generated architecture is only as good as your requirements. If your requirements are ambiguous, the architecture will be too. Spending 10 minutes clarifying "who consumes what" saves you a week of missing data.
+AI can generate correct code. Architecture decisions are still on you. Spending 10 minutes clarifying "who consumes what" saves you a week of missing data.
 </Callout>

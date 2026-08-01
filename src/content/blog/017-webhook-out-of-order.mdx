@@ -1,0 +1,54 @@
+---
+id: "017"
+title: "User Reuploaded. Still Saw the Old Image."
+tagline: "Webhook order is unpredictable. Version numbers aren't."
+tags: ['prod-bug', 'system-design']
+date: 2026-05-25
+readTime: 2
+linkedin_url: ""
+hero_image: ""
+draft: false
+signoff: "How did you handle out-of-order webhooks in your system?"
+---
+
+We had a weird bug in prod. User reuploaded a car image… but still saw the old one. 👻
+
+The flow was simple:
+
+1. User uploads an image
+2. We send it to a third-party AI service for processing
+3. Service fires a webhook → we store the result
+
+Then this happened:
+
+- User uploads Image A → not happy → reuploads Image B
+- Image B finishes processing first ✅ — we store it
+- Image A finishes late 💀 — overwrites Image B
+
+Classic race condition.
+
+![Race condition vs versioned updates — out-of-order webhook handling](/images/webhook-race-condition-versioning.png)
+
+**The root cause:** webhook delivery timing is completely unpredictable. Sometimes seconds. Sometimes minutes. Order of uploads ≠ order of webhook arrival.
+
+## The fix: version every upload
+
+Each upload request gets a version number. When the webhook arrives, we check:
+
+```java
+if (webhook.version < stored.latestVersion) {
+    // stale response — discard
+    return;
+}
+// latest — store it
+storeImage(webhook.result);
+```
+
+- Latest version? Store it ✅
+- Older version? Discard it 🗑️
+
+One version check. That's it. Users now see consistent data.
+
+You could also use request timestamps — only accept the webhook if it's newer than what's stored. Works too, but version numbers are safer since timestamps can drift across servers.
+
+Distributed systems are fun… until time starts lying to you. 😄

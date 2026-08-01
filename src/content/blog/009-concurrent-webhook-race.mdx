@@ -1,0 +1,65 @@
+---
+id: "009"
+title: "Hundreds of Payments Broken in 1ms"
+tagline: "Two webhooks. Same row. One vanished."
+tags: ['prod-bug', 'system-design']
+date: 2026-05-25
+readTime: 3
+linkedin_url: ""
+hero_image: ""
+draft: false
+signoff: "How do you handle concurrent writes in your payment flow?"
+---
+
+100s of payments ended up in a broken state. 💀
+
+And we had no idea what happened in production.
+
+The flow looked simple:
+
+> Payment gateway sends us webhooks → we read the row → update it → save.
+
+Then this happened.
+
+Two webhooks landed at the **exact same millisecond** — a `SUCCESS` and a `PENDING` status for the same payment.
+
+- Both read the same row
+- Both wrote back
+- Last write wins... and one update just vanished 👻
+
+Classic concurrent write race. Razorpay retried the webhook, we processed both, and the DB picked a winner at random.
+
+---
+
+![The fix: versioning + retry = concurrency handled](/images/concurrent-webhooks-fix.png)
+
+## How we fixed it
+
+**1. Optimistic locking**
+
+Added `@Version` to the payment entity. Every update now carries a version number. Version mismatch on save? The update gets rejected — not silently overwritten.
+
+```java
+@Version
+private Long version;
+```
+
+**2. Retry loop**
+
+On a conflict, the handler refetches the latest row and tries again — so no update is silently dropped.
+
+**3. Terminal state guard**
+
+After refetch, if the row is already `SUCCESS`, we stop. A late-arriving `PENDING` should never overwrite a finished payment.
+
+```java
+if (payment.getStatus() == SUCCESS) return; // already done, ignore
+```
+
+---
+
+Versioning gives safety. Retry gives resilience. Together they keep payments consistent — no table locks, happy path stays fast.
+
+Payment gateways will redeliver, retry, and reorder webhooks. Our services need to be ready for that.
+
+Distributed systems are fun... until you see *"same row is being updated by another transaction"* 😄

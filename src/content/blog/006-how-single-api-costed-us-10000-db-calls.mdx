@@ -1,0 +1,48 @@
+---
+id: "006"
+title: "10,000 DB Queries Per API Call"
+tagline: "N+1 hiding in plain sight."
+tags: ['prod-bug', 'system-design']
+date: 2026-05-01
+readTime: 2
+linkedin_url: "https://www.linkedin.com/posts/venkatesh-patnala-927a521b0_java-springboot-backenddevelopment-share-7455470853275713536-Dfz1?utm_source=share&utm_medium=member_desktop&rcm=ACoAADFG368BFeVJIpPKSrai_UiHr_xTBGS54Yw"
+hero_image: ""
+draft: false
+signoff: "What's the sneakiest N+1 you've caught in prod?"
+---
+
+10,000 DB queries. Per. API. Call. 💀
+
+We had no idea until latency hit 5 seconds and started laughing at us.
+
+We had a loop that called `save()` on every entity individually. Looked harmless. Worked fine at low traffic.
+
+Then production came in.
+
+10k entities → 10k DB hits → 5 second response time. Classic N+1 query, hiding in plain sight.
+
+![N+1 Query Problem: loop queries vs batch query fix](/images/n-plus-1-query-problem.png)
+
+**What's actually happening:**
+
+For every order in the list, the code fires a separate DB query. 1 API call with N orders = N+1 DB hits. At low traffic nobody notices — at scale, the DB buckles.
+
+## The fix
+
+Instead of `save()` inside the loop, use `saveAll()` outside it:
+
+```java
+// ❌ N+1 — one DB hit per entity
+for (Entity e : entities) {
+    repository.save(e);
+}
+
+// ✅ Batch insert — one DB hit for all
+repository.saveAll(entities);
+```
+
+One batch insert. Latency dropped. DB stopped crying. 😅
+
+This would've slipped into prod unnoticed at low traffic. Scale is what revealed it.
+
+Before making any API public, always ask: *"what does this look like at 10x traffic?"* ⚡

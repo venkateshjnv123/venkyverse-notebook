@@ -1,0 +1,47 @@
+---
+id: "012"
+title: "Uber Knew Before I Did"
+tagline: "I didn't open the app. It already knew where I was going."
+tags: ['system-design', 'opinion']
+date: 2026-05-25
+readTime: 2
+linkedin_url: ""
+hero_image: ""
+draft: false
+signoff: "Curious what personalisation feature has surprised you the most?"
+---
+
+Custom notifications? No.
+
+**Uber predictive notifications.** 💀
+
+- **10:15 AM** → "Ready to ride to office?"
+- **6:45 PM** → "Ready to ride back home?"
+
+I didn't open the app. Didn't book anything. It just... knew.
+
+![Uber predictive notifications — Mon 10:15 AM and Tue 6:45 PM](/images/uber-predictive-notifications.png)
+
+Uber had already figured out:
+- when I usually leave for office
+- when I leave back home
+- estimated arrival time at the destination
+- current traffic conditions
+
+All before I even unlocked my phone.
+
+## What's likely happening under the hood
+
+This isn't magic — it's a fairly elegant combination of systems:
+
+**Pattern recognition** — Uber builds a personal routine model from your ride history. Same pickup zone, same time window, repeated across days = detected habit.
+
+**Time-series ML** — a model scores the probability that you'll request a ride in the next ~15 minutes, triggered by time-of-day + day-of-week + your historical cadence.
+
+**Real-time traffic** — once the prediction fires, it pulls live ETA data and stitches it into the notification copy before pushing.
+
+**Push at the right moment** — not too early (you might ignore it), not too late (you've already left). The timing itself is a model output.
+
+The result feels personal. Because it is — it's a model built entirely around *your* behaviour, not a generic broadcast.
+
+Personalisation + predictive systems done right don't feel like a feature. They feel like the app just *gets* you. 🤯

@@ -1,0 +1,55 @@
+---
+id: "015"
+title: "The DB Migration That Took Down Payments"
+tagline: "Code deploys gradually. DB changes are instant. Never mix them."
+tags: ['prod-bug', 'system-design']
+date: 2026-05-25
+readTime: 2
+linkedin_url: ""
+hero_image: ""
+draft: false
+signoff: "Have you ever had a DB migration take down prod?"
+---
+
+One small mistake in a DB migration — payments down, lakhs of revenue wiped. 💀
+
+We just had to drop a column from the payments table.
+
+Works in local ✔️ Works in staging ✔️
+
+Then production happened.
+
+![What happened vs what we should have done](/images/db-migration-prod-outage.png)
+
+We had 4 pods running:
+
+- Pod 1 got the new deploy → migration ran → **column dropped**
+- Pods 2, 3, 4 still on old code
+- Old code tried to read the deleted column → `Column not found`
+- Payment flow crashed. Revenue bleeding every second. 💥
+
+![It was a small change. Big impact.](/images/db-migration-meme.png)
+
+## The mistake
+
+We combined code deploy + DB migration in the same release.
+
+**Code rolls out gradually — pod by pod.**  
+**DB changes are instant — the whole cluster sees them immediately.**
+
+They can never go together.
+
+## The fix: 2-phase rollout
+
+**Phase 1** — Remove all code references to the column. Deploy. Wait for all pods to update. Column still exists in DB, nothing breaks. ✅
+
+**Phase 2** — Now run the migration and drop the column. Every pod is already on code that doesn't use it. Nothing breaks. ✅
+
+```
+Phase 1: All pods → new code (no column usage) → safe deploy
+Phase 2: All pods stable → migration runs → column dropped cleanly
+```
+
+DB changes must be backward compatible with the **previous** version of code, not just the current one.
+
+Learned this the hard way. 😅
