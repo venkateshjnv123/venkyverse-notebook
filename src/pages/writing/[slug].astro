@@ -382,6 +382,13 @@ const articleSchema = {
   margin: 1.75rem 0 0.75rem;
 }
 
+/* Keep post media inside the reading column on every screen size. */
+.article :global(img) {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
 /* Inline code */
 .article :global(code:not([class*="language"])) {
   font-family: var(--font-mono);
