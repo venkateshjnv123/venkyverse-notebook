@@ -159,7 +159,7 @@ const encodedTitle = encodeURIComponent(post.data.title);
       <div class="next-prev">
         <div class={`nav-card ${!prevPost ? 'nav-card-empty' : ''}`}>
           {prevPost ? (
-            <a href={`/writing/${prevPost.slug}`} class="nav-card-link">
+            <a href={`/writing/${prevPost.id}`} class="nav-card-link">
               <div class="nav-card-label">← previous · №{prevPost.data.id.padStart(3,'0')}</div>
               <div class="nav-card-title">{prevPost.data.title}</div>
             </a>
@@ -169,7 +169,7 @@ const encodedTitle = encodeURIComponent(post.data.title);
         </div>
         <div class={`nav-card nav-card-right ${!nextPost ? 'nav-card-empty' : ''}`}>
           {nextPost ? (
-            <a href={`/writing/${nextPost.slug}`} class="nav-card-link">
+            <a href={`/writing/${nextPost.id}`} class="nav-card-link">
               <div class="nav-card-label nav-label-right">next · №{nextPost.data.id.padStart(3,'0')} →</div>
               <div class="nav-card-title nav-title-right">{nextPost.data.title}</div>
             </a>
