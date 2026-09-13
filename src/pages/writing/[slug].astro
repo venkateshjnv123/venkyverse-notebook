@@ -33,7 +33,7 @@ const relatedPosts = allPosts
   .slice(0, 3);
 
 function formatDate(date: Date) {
-  return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+  return date.toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
 const currentURL = Astro.url.href;
