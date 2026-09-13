@@ -1,0 +1,47 @@
+---
+id: "042"
+title: "Why Offset Pagination Repeated Page-One Records"
+tagline: "New rows shifted the window, while deep offsets forced the database to walk and discard thousands of rows."
+tags: ['prod-bug', 'backend']
+date: 2026-08-27
+readTime: 4
+linkedin_url: "https://www.linkedin.com/feed/update/urn:li:activity:7498735248713785344/"
+hero_image: "/images/042-cursor-pagination.jpg"
+draft: false
+signoff: "Offset or cursor pagination—which is your default for production APIs?"
+---
+
+A user saw 20 records on page one. Page two showed some of the same records. Nobody changed the query.
+
+```sql
+ORDER BY created_at DESC
+LIMIT 20 OFFSET 20
+```
+
+This worked perfectly while the table had few writes. At scale, new rows landed constantly.
+
+![Offset pagination shifting under writes versus stable cursor pagination](/images/042-cursor-pagination.jpg)
+
+Between the request for page one and the request for page two, three rows were inserted at the top. Everything shifted by three. Rows 18, 19, and 20 moved onto page two and appeared twice.
+
+If 20 new rows arrive before someone fetches page two, they could see almost the same records as page one.
+
+The pagination worked correctly. It simply paginated a slightly different table every time.
+
+There was another problem: `OFFSET 50000` doesn't skip 50,000 rows for free. The database walks them and throws them away before returning the next 20. Later pages became slower and slower, and we blamed the index.
+
+We moved to cursor pagination:
+
+1. The client sends back the last row it saw.
+2. The query starts strictly after that row.
+3. The ID acts as a tie-breaker because `created_at` is not unique.
+
+```sql
+WHERE (created_at, id) < (:lastCreatedAt, :lastId)
+ORDER BY created_at DESC, id DESC
+LIMIT 20
+```
+
+Offset counts from the top on every request, so anything inserted above your page moves the window. A cursor names the exact row where you stopped, so the next page begins there no matter what was inserted above it.
+
+Offset asks the database to count from the beginning. A cursor remembers the last row you already saw.

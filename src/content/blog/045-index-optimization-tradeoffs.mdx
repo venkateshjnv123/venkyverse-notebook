@@ -1,0 +1,41 @@
+---
+id: "045"
+title: "AI Cut Read Latency and Made Two Write APIs Slower"
+tagline: "Three new indexes improved one query by 70%, but the table's total workload paid the bill."
+tags: ['prod-bug', 'ai', 'backend']
+date: 2026-09-02
+readTime: 3
+linkedin_url: "https://www.linkedin.com/feed/update/urn:li:activity:7500928088877445120/"
+hero_image: "/images/045-index-tradeoffs.jpg"
+draft: false
+signoff: "What do you check before adding or removing an index in production?"
+---
+
+The best fix I've seen recently: delete the table causing the latency. Task done. ✅
+
+Something similar happened when I tried to reduce API read latency.
+
+I asked AI—Codex—to optimize a slow query. It did well. Read latency dropped by 70%.
+
+But two other endpoints became slower the same day.
+
+![An indexing joke about deleting the table to remove latency](/images/045-index-tradeoffs.jpg)
+
+What actually happened:
+
+- It created three unique indexes.
+- It removed one “redundant” index.
+- The new indexes made writes more expensive because every `CREATE` and `UPDATE` had more index structures to maintain.
+- The removed index had served another update query. Its replacement covered the same columns, but not in the order that query needed.
+
+Our create and update endpoints went from roughly 400 ms to 900 ms.
+
+Optimization is always a trade-off. Do we optimize reads, writes, or both? That depends on the read-to-write ratio and the overall workload.
+
+Before touching indexes:
+
+1. Check which queries use each index.
+2. Check how long the new index will take to build and its impact during the build.
+3. Understand the overall workload on the table.
+
+Reducing latency isn't just adding indexes. It means optimizing the whole system.

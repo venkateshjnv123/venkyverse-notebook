@@ -1,0 +1,53 @@
+---
+id: "034"
+title: "Why @Transactional Failed During Self-Invocation"
+tagline: "The annotation described the transaction, but a bypassed Spring proxy never applied it."
+tags: ['prod-bug', 'backend']
+date: 2026-07-22
+readTime: 3
+linkedin_url: "https://www.linkedin.com/feed/update/urn:li:activity:7485715459896451072/"
+hero_image: "/images/034-transactional-self-invocation.jpg"
+draft: false
+signoff: "What's the most surprising Spring gotcha you've encountered?"
+---
+
+I added `@Transactional` on the method. Spring never started the transaction. 🤯
+
+```java
+public void updateOrder(Long id) {
+    paymentService.verifyPayment();
+    updateOrderInTx(id);
+}
+
+@Transactional
+public void updateOrderInTx(Long id) {
+    // DB operations
+}
+```
+
+Code looked perfect until some database updates succeeded, others failed midway, and nothing rolled back.
+
+![Spring transactional proxy and self-invocation flow](/images/034-transactional-self-invocation.jpg)
+
+Most people think `@Transactional` is magic. It isn't. It's implemented using a Spring proxy.
+
+When another Spring bean calls your service, the call goes through that proxy. The proxy opens the transaction, commits it, or rolls it back.
+
+Here, the method call never leaves the current object. The proxy is bypassed.
+
+No proxy. No transaction.
+
+One fix is to move the transactional work into another Spring bean:
+
+```text
+OrderService → TransactionService → @Transactional → Database
+```
+
+Now the method call goes through the Spring proxy and the transaction starts.
+
+There are two easy ways to misuse `@Transactional`:
+
+- Keep it open while waiting for network calls.
+- Expect it to work during self-invocation.
+
+The annotation describes the transaction. The Spring proxy applies it. Once I understood that distinction, a lot of Spring's transactional “magic” stopped being magic.

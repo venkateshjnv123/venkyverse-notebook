@@ -1,0 +1,105 @@
+---
+id: "030"
+title: "a payment succeeded, then failed: handling out-of-order payment callbacks"
+tagline: "Two callbacks landed 200ms apart. Whichever arrived last won — sometimes the wrong one."
+tags: ['prod-bug', 'backend']
+date: 2026-08-19
+readTime: 5
+linkedin_url: "https://www.linkedin.com/feed/update/urn:li:activity:7495710020836311040/"
+hero_image: "/images/a-payment-succeeded-then-failed-handling-out-of-order-paymen-hero.png"
+draft: false
+signoff: "How'd you handle out-of-order callbacks in your system?"
+---
+
+A payment succeeded. Then same payment failed. 200ms apart.
+
+Customer's money left account. DB said payment failed, order got cancelled.
+
+## The setup
+
+Payment gateway sends callback for every state payment passes through. `initiated`. `success`. `failed`. `paid`.
+
+We did obvious thing. Read callback, update payment status, done. One handler, switch on state, write.
+
+Worked fine for months.
+
+## First of all, how does this even happen?
+
+Confused us longest. Two contradictory callbacks for one payment id — surely gateway wrong?
+
+It isn't. Think how you actually pay with UPI.
+
+```
+1st attempt  ->  wrong pin      ->  FAILED  callback
+2nd attempt  ->  correct pin    ->  SUCCESS callback
+```
+
+Fat-finger pin, get it wrong, immediately retry. Two attempts, seconds apart, both against same payment id. Gateway faithfully reports both.
+
+So two callbacks leave near same time, travel over public internet to our webhook endpoint. Whichever server processed last became final state in payments table.
+
+Sometimes `SUCCESS`. Sometimes `FAILED`.
+
+Congratulations. Money in, order cancelled.
+
+Classic last-write-wins.
+
+## The root cause
+
+Handler looked like this:
+
+```java
+public void handleCallback(PaymentCallback callback) {
+    Payment payment = paymentRepo.findById(callback.getPaymentId());
+    payment.setStatus(callback.getStatus());
+    paymentRepo.save(payment);
+}
+```
+
+Nothing wrong on its own. Problem: assumption underneath — callback arriving now describes payment as it is now.
+
+It doesn't. Callback tells you state existed at some point. Says nothing about whether still current, nothing about where it sits in sequence.
+
+We let network timing decide payment status.
+
+## The fix
+
+Two pieces. First does most work.
+
+**1. Terminal states.** `SUCCESS` and `PAID` are final. Payment reaching either cannot legally go anywhere else — completed payment doesn't become failed later. Once said out loud, rule wrote itself:
+
+```java
+private static final Set<PaymentStatus> TERMINAL =
+    Set.of(PaymentStatus.SUCCESS, PaymentStatus.PAID);
+
+public void handleCallback(PaymentCallback callback) {
+    Payment payment = paymentRepo.findById(callback.getPaymentId());
+
+    if (TERMINAL.contains(payment.getStatus())) {
+        return;  // nothing to update
+    }
+
+    payment.setStatus(callback.getStatus());
+    paymentRepo.save(payment);
+}
+```
+
+Now order stops mattering. `SUCCESS` first → later `FAILED` sees terminal state, drops. `FAILED` first → writes, then `SUCCESS` overwrites correctly since `FAILED` never terminal.
+
+**2. Optimistic locking**, so callbacks can't interleave *inside* that check. Without it, both read non-terminal status before either writes — back to square one. `@Version` column plus bounded retry — we used 3 attempts — closes window.
+
+```java
+@Version
+private Long version;
+```
+
+Retry matters. Under optimistic locking, loser of race gets `OptimisticLockingFailureException` instead of silently corrupting row. On retry, re-reads row — now terminal — drops itself.
+
+## What I'd take from this
+
+Instinct when callbacks misbehave: reach for ordering — sequence numbers, timestamps, strict-order queue. All works. All more machinery than needed.
+
+Modelling which states final was cheaper, survives things ordering doesn't — duplicate delivery, replayed webhook, callback showing up an hour late after gateway retry. None need ordering if receiver already knows payment finished.
+
+Retries protect you from lost callbacks.
+Terminal states protect you from wrong one winning.

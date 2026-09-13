@@ -1,0 +1,54 @@
+---
+id: "044"
+title: "Retries Turned a Four-Minute Outage Into Four Hours"
+tagline: "Fixed delays synchronized clients and multiplied load on the exact service trying to recover."
+tags: ['prod-bug', 'system-design', 'backend']
+date: 2026-09-01
+readTime: 4
+linkedin_url: "https://www.linkedin.com/feed/update/urn:li:activity:7500577632837849088/"
+hero_image: "/images/044-retry-storm.jpg"
+draft: false
+signoff: "How do you decide which failures are safe and useful to retry?"
+---
+
+A downstream service got slow. We added retries. The outage went from four minutes to four hours.
+
+At first, the logic felt right: the service is throwing errors, so try again. Three retries, then mark it as failed.
+
+![How synchronized retries create a retry storm](/images/044-retry-storm.jpg)
+
+But those retries were doing more than we thought.
+
+The downstream service was already at half capacity—two of four nodes were dead. Every failed request was sent again and again. One request could turn into four attempts, making the original traffic as much as four times larger.
+
+Every client retried with the same fixed delay. The retries arrived together and hammered the downstream service at the exact moment it was trying to recover.
+
+Service comes up → a wave of retries arrives → service falls over again.
+
+## What we changed
+
+### 1. Exponential backoff
+
+Instead of the same fixed delay every time:
+
+```text
+1st retry → 5 minutes
+2nd retry → 10 minutes
+3rd retry → 20 minutes
+```
+
+### 2. Jitter
+
+Even with exponential backoff, requests that fail together can retry together. We added randomness to the schedule, such as five minutes plus a random 1–1,000 milliseconds.
+
+### 3. Retry only when useful
+
+Timeouts and temporary 5xx failures such as `503` may be worth retrying. Don't blindly retry 4xx errors. If the request itself is invalid, sending the same request three more times won't fix it.
+
+Retries are for transient failures—failures that can correct themselves. If a request will fail every time, retrying doesn't help.
+
+If the downstream is already struggling, blind retries add more load to the service that's trying to recover.
+
+Know **when** to retry, not merely “retry three times.”
+
+This strategy works well for reads. But what happens when the request is a write?

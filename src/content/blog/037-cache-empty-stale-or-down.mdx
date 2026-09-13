@@ -1,0 +1,42 @@
+---
+id: "037"
+title: "A Cache Is More Than the Happy Path"
+tagline: "The real design question is what happens when cached data is empty, stale, or unavailable."
+tags: ['system-design', 'backend']
+date: 2026-08-03
+readTime: 3
+linkedin_url: "https://www.linkedin.com/feed/update/urn:li:activity:7489923309606682625/"
+hero_image: "/images/037-cache-tradeoffs.jpg"
+draft: false
+signoff: "What broke for you after you added a cache?"
+---
+
+I used to think: “Add a cache. Latency solved.” ⚡
+
+We added a cache. Then I spent the next few months learning cache. 💀
+
+![The hidden production trade-offs behind adding a cache](/images/037-cache-tradeoffs.jpg)
+
+## 1. The cache becomes a second source of truth
+
+The same data now lives in two places. Every write has to update or evict the cache entry. Miss one eviction path and users see stale data.
+
+## 2. Expiry is a traffic event
+
+One configuration key expired. Hundreds of requests hit the database in the same millisecond. Latency went from 200 ms to 2 seconds.
+
+Nothing else had changed. Handling cache expiry was equally important.
+
+## 3. The cache is no longer optional
+
+It started as “make it faster.” Six months later, the database couldn't survive full traffic.
+
+Redis goes down → the service goes down.
+
+That's not just a cache. That's a dependency.
+
+None of this means “don't cache.” We still cache everything.
+
+But “add a cache” is not the design decision. The design decision is what happens when it's empty, stale, or gone.
+
+Adding a cache is only the happy path. Production shows you the other three. ⚡

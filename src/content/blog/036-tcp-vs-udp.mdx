@@ -1,0 +1,39 @@
+---
+id: "036"
+title: "TCP vs UDP: Safe Delivery or Lower Latency?"
+tagline: "A memorable comparison of coordination, retries, delivery guarantees, and speed."
+tags: ['system-design', 'backend']
+date: 2026-08-01
+readTime: 2
+linkedin_url: "https://www.linkedin.com/feed/update/urn:li:activity:7489287124777594880/"
+hero_image: "/images/036-tcp-vs-udp.jpg"
+draft: false
+signoff: "Where did choosing TCP or UDP materially change your system design?"
+---
+
+Now I will never confuse TCP and UDP.
+
+![TCP and UDP delivery behaviour explained with a meme](/images/036-tcp-vs-udp.jpg)
+
+## TCP
+
+- Both sides coordinate.
+- The receiver confirms every packet.
+- Failed? Retry.
+- Slower, but safe.
+
+## UDP
+
+- Send it as fast as possible.
+- No confirmation.
+- No retries.
+- Lower latency.
+
+Real-world examples:
+
+- **TCP:** payments, file transfers, API calls
+- **UDP:** live video, gaming, DNS lookups
+
+When you absolutely cannot lose data, reach for TCP. When speed matters more than perfect delivery, UDP may be the better fit.
+
+The meme lives rent-free in my head now. 😄

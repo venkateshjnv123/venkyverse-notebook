@@ -1,0 +1,53 @@
+---
+id: "033"
+title: "Polling vs Long Polling vs SSE vs WebSockets"
+tagline: "A practical way to choose the simplest real-time protocol your feature actually needs."
+tags: ['system-design', 'backend']
+date: 2026-07-17
+readTime: 3
+linkedin_url: "https://www.linkedin.com/feed/update/urn:li:activity:7483869355936731136/"
+hero_image: "/images/033-realtime-protocols.jpg"
+draft: false
+signoff: "Which of these protocols did you last use, and why?"
+---
+
+My Product Manager friend has been vibe coding lately. Now he wants to use WebSockets for every feature. 😂
+
+So I explained it like this:
+
+![Polling, long polling, server-sent events, and WebSockets compared](/images/033-realtime-protocols.jpg)
+
+## Polling
+
+PM: “Anything new?”<br />
+Backend: “No.”<br />
+PM: “Now?”<br />
+Backend: “Still no.”<br />
+PM: “How about now?”
+
+The client keeps asking until it gets a response.
+
+## Long polling
+
+PM: “I'm going to wait here.”<br />
+Backend: “I'll answer only when there's actually something new.”
+
+The server sends a response when ready. Until then, the client waits.
+
+## Server-Sent Events
+
+Backend: “Relax. I'll text you whenever something changes.”<br />
+PM: “Perfect.”
+
+The client just listens. No conversation—only one-way updates from the server.
+
+## WebSockets
+
+PM: “Let's stay on a call.”<br />
+Backend: “Cool. We can both talk whenever we want.”
+
+Perfect for chat apps, multiplayer games, live collaboration, and trading platforms.
+
+Probably overkill for: “Notify me when my report is ready.”
+
+Sometimes the best architecture is the boring one. 😄

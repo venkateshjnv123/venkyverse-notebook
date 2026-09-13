@@ -1,0 +1,58 @@
+---
+id: "032"
+title: "One @Transactional Annotation Doubled Our API Latency"
+tagline: "The database was fast; we were holding its connections while waiting on the network."
+tags: ['prod-bug', 'backend']
+date: 2026-07-16
+readTime: 3
+linkedin_url: "https://www.linkedin.com/feed/update/urn:li:activity:7483402700106342400/"
+hero_image: "/images/032-transaction-latency.jpg"
+draft: false
+signoff: "Where have you seen an oversized transaction quietly hurt production?"
+---
+
+We added one annotation. Our API latency doubled. 💀
+
+No slow SQL. No missing indexes. No traffic spike. Just one innocent-looking `@Transactional`.
+
+![Long transaction holding a database connection versus a short transaction](/images/032-transaction-latency.jpg)
+
+```java
+@Transactional
+public void updateOrder() {
+    Order order = repository.findById(id);
+    paymentService.verifyPayment(); // ~800ms
+    repository.save(order);
+}
+```
+
+At first glance, nothing looked wrong. But the transaction starts before the external API call.
+
+That means:
+
+- A database connection is acquired.
+- The transaction stays open while waiting about 800 ms for another service.
+- That connection can't return to the pool.
+
+At low traffic, nobody notices. At production scale, hundreds of requests hold database connections far longer than necessary.
+
+The result:
+
+- Connection-pool exhaustion
+- Requests waiting for available connections
+- API latency spiking across the system
+
+The database wasn't slow. The queries weren't slow. We were holding an expensive resource for too long.
+
+The fix was surprisingly simple:
+
+```text
+External API call
+        ↓
+@Transactional
+fetch → update → save
+```
+
+Keep transactions for database work only. `@Transactional` isn't just about whether you use it. It's also about where you use it.
+
+A few extra milliseconds inside a transaction might seem harmless until they're multiplied across thousands of concurrent requests.

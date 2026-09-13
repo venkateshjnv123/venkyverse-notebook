@@ -1,0 +1,33 @@
+---
+id: "047"
+title: "My Production Checklist for AI-Generated Code"
+tagline: "Functionally correct code can still hide unsafe assumptions about scale, failures, retries, and data."
+tags: ['ai', 'backend']
+date: 2026-09-10
+readTime: 3
+linkedin_url: "https://www.linkedin.com/feed/update/urn:li:activity:7503707460935839744/"
+hero_image: "/images/047-ai-code-review.jpg"
+draft: false
+signoff: "What's on your AI code-review checklist before production?"
+---
+
+AI can write code that works. Making sure it survives production is still your job.
+
+Here's the checklist I use when reviewing AI-generated code:
+
+![A checklist for reviewing AI-generated code before production](/images/047-ai-code-review.jpg)
+
+1. Is there a database call inside a loop?
+2. Does each query have the right indexes for its filters and sorting?
+3. Did it add indexes on columns nobody queries? Every index adds write overhead; faster reads aren't free.
+4. Is there an external HTTP call inside a transaction?
+5. Does it catch an exception and quietly continue? That's how bugs reach production without leaving useful logs.
+6. Does it retry an operation that isn't safe to run twice? Retried writes need idempotency or they can create duplicates.
+7. Does it scan an entire cache or table to find one item? Fine with 100 rows; painful with a million.
+8. What happens at ten times the data and ten times the traffic?
+9. Are there migration or database changes? Check them against the actual queries and execution plans.
+10. Does the code follow the project's naming conventions?
+
+AI-generated code is often functionally correct. The assumptions around scale, failure, retries, and data are where things usually break.
+
+Review it like you'd review a junior engineer's pull request: the code may be right, but the assumptions still need scrutiny.

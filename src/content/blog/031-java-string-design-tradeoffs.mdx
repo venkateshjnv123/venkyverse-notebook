@@ -1,0 +1,39 @@
+---
+id: "031"
+title: "Why Java Strings Are Objects, Not Character Arrays"
+tagline: "The extra ceremony around Java strings buys immutability, pooling, cached hashes, and thread safety."
+tags: ['backend', 'opinion']
+date: 2026-07-13
+readTime: 2
+linkedin_url: "https://www.linkedin.com/feed/update/urn:li:activity:7482451993173794816/"
+hero_image: "/images/031-java-string-tradeoffs-1.jpg"
+draft: false
+signoff: "What's one programming language feature you hated until you understood its trade-offs?"
+---
+
+Most times, I thought Java was making life harder. 😂
+
+Coming from Python or C++, writing `str.charAt(2)` instead of `str[2]` felt completely unnecessary.
+
+“Why can't Java just let me index the string?”
+
+![A comparison of how strings work in Java, C++, and Python](/images/031-java-string-tradeoffs-1.jpg)
+
+Turns out, this wasn't a random design choice. Java treats a `String` as an object, not just an array of characters. That one decision gives us things like:
+
+- **Immutable strings** → Tokens, DB URLs, SQL queries, and other critical values can't be modified accidentally.
+- **String pool** → Identical strings share one object, saving memory.
+- **Cached hash codes** → Faster `HashMap` lookups because the hash is computed once and reused.
+- **Thread safety** → Multiple threads can safely read the same string without synchronization.
+
+```java
+String a = "Java";
+String b = "Java";
+// Only one "Java" object is created.
+```
+
+![Java String immutability and string-pool explanation](/images/031-java-string-tradeoffs-2.jpg)
+
+Python and C++ make strings behave much more like character sequences. Neither approach is “better.” They're optimizing for different things.
+
+Good language design isn't about making everything easier. It's about choosing the right trade-offs. The more languages you learn, the more those trade-offs start making sense.

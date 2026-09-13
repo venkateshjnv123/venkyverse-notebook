@@ -1,0 +1,52 @@
+---
+id: "038"
+title: "Never Put Lombok @Data on a JPA Entity"
+tagline: "A generated hashCode changed after persistence and made the same object disappear inside a HashSet."
+tags: ['prod-bug', 'backend']
+date: 2026-08-04
+readTime: 4
+linkedin_url: "https://www.linkedin.com/feed/update/urn:li:activity:7490403592017997824/"
+hero_image: "/images/038-jpa-data-hashset.jpg"
+draft: false
+signoff: "Which identity strategy do you use for equality on JPA entities?"
+---
+
+Never put Lombok's `@Data` on a JPA entity.
+
+I learned this after my service started sending notifications twice. 💀
+
+The code had worked for months. We checked duplicates in a `HashSet`. No race condition. No obvious bad code. But `HashSet.contains()` started returning `false`.
+
+![How a changing JPA entity hash code breaks HashSet lookups](/images/038-jpa-data-hashset.jpg)
+
+```java
+Set<Notification> pending = new HashSet<>();
+pending.add(notification);          // id is null here
+
+repository.save(notification);     // JPA assigns the id
+pending.contains(notification);    // false
+```
+
+Read that last line again. Same object. Same reference. `contains()` returned `false`.
+
+A `HashSet` doesn't scan like a list. It uses buckets:
+
+- `add()` calls `hashCode()`, picks a bucket, and places the object there.
+- `contains()` calls `hashCode()` again, goes to that bucket, then checks `equals()`.
+
+The whole thing depends on one assumption: `hashCode()` returns the same number today and tomorrow.
+
+`@Data` generates `equals()` and `hashCode()` over every field—including the database ID.
+
+```text
+Before save → id is null → hashCode = X
+After save  → id is 4471 → hashCode = Y
+```
+
+We saved the object in bucket X but went looking in bucket Y. The object was in the set, but its hash code now pointed somewhere else.
+
+The fix is to base equality on a value that never changes: a natural business key such as `orderId`, phone number, or reference number; or a UUID assigned before persistence.
+
+No exception. No error log. The bug sat quietly for two weeks. 👻
+
+A `HashSet` doesn't store your object. It stores the bucket your object belongs to.
