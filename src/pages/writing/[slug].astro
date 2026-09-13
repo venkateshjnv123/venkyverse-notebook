@@ -1,6 +1,10 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getCollection, render, type CollectionEntry } from 'astro:content';
+import Callout from '../../components/Callout.astro';
+import Aside from '../../components/Aside.astro';
+
+const mdxComponents = { Callout, Aside };
 
 export async function getStaticPaths() {
   const posts = await getCollection('blog', ({ data }) => !data.draft);
@@ -93,7 +97,7 @@ const encodedTitle = encodeURIComponent(post.data.title);
   <!-- Article Body -->
   <article class="article-wrap">
     <div class="article">
-      <Content />
+      <Content components={mdxComponents} />
     </div>
   </article>
 
