@@ -5,11 +5,13 @@ tagline: "Code deploys gradually. DB changes are instant. Never mix them."
 tags: ['prod-bug', 'system-design']
 date: 2026-05-25
 readTime: 2
-linkedin_url: ""
-hero_image: ""
+linkedin_url: "https://www.linkedin.com/posts/venkatesh-patnala-927a521b0_backend-systemdesign-distributedsystems-activity-7453397353023115264-klsi?utm_source=share&utm_medium=member_desktop&rcm=ACoAADFG368BFeVJIpPKSrai_UiHr_xTBGS54Yw"
+hero_image: "/images/015-db-migration-prod-outage-hero.png"
 draft: false
 signoff: "Have you ever had a DB migration take down prod?"
 ---
+
+![What happened vs what we should have done](/images/015-db-migration-prod-outage-hero.png)
 
 One small mistake in a DB migration — payments down, lakhs of revenue wiped. 💀
 
@@ -19,8 +21,6 @@ Works in local ✔️ Works in staging ✔️
 
 Then production happened.
 
-![What happened vs what we should have done](/images/db-migration-prod-outage.png)
-
 We had 4 pods running:
 
 - Pod 1 got the new deploy → migration ran → **column dropped**
@@ -28,7 +28,7 @@ We had 4 pods running:
 - Old code tried to read the deleted column → `Column not found`
 - Payment flow crashed. Revenue bleeding every second. 💥
 
-![It was a small change. Big impact.](/images/db-migration-meme.png)
+![It was a small change. Big impact.](/images/015-db-migration-prod-outage-meme-hero.png)
 
 ## The mistake
 

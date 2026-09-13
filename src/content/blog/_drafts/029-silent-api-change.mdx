@@ -1,0 +1,112 @@
+---
+id: '029'
+title: An External API Changed. We Had No Idea. Writes Stopped.
+tagline: No errors. No crash. The DB write just didn't happen.
+tags:
+  - prod-bug
+date: 2026-06-13
+readTime: 3
+hero_image: /images/029-silent-api-change/hero_image.jpg
+draft: true
+signoff: How do you protect against silent external API changes in your system?
+---
+Spent a whole day debugging a missing DB write.
+
+No errors. No exceptions. No crash. The write just didn't happen.
+
+I checked my code 10 times. Looked fine. Checked the DB connection. Connected. Checked logs. There were a few warning-level lines, but nothing that screamed error.
+
+## What happened
+
+The external service we call quietly changed their API.
+
+```
+Before: GET /calls/{id}
+After:  GET /calls?id=...
+```
+
+Same endpoint. Same data. They just moved the `id` from a path parameter to a query parameter. No announcement. No version bump in the URL. No breaking change notice.
+
+Our code hit their old URL. Got a 404 back. And then nothing.
+
+```java
+// Our code — called the old URL format
+String url = baseUrl + "/calls/" + callId;  // /calls/abc123
+ResponseEntity<CallResponse> response = restTemplate.getForEntity(url, CallResponse.class);
+
+// Response came back 404
+// We weren't checking status codes explicitly
+// Body was null on 404
+// Our service: "no data to write" → silently skipped the DB update
+```
+
+The sequence:
+
+```
+Our service  →  GET /calls/{id}  →  External API  →  404 Not Found
+External API →  returns 404 body (null/empty)
+Our service  →  deserializes null  →  "nothing to write"
+DB write     →  never happens
+```
+
+No exception thrown. No metric spiked. A few warning logs in the noise. Their "small change" = my whole afternoon.
+
+## What we fixed
+
+### 1. Validate HTTP status codes explicitly
+
+Don't trust the body. Check the status first.
+
+```java
+ResponseEntity<CallResponse> response = restTemplate.getForEntity(url, CallResponse.class);
+
+if (!response.getStatusCode().is2xxSuccessful()) {
+    log.error("External API failed: status={}, url={}, callId={}",
+        response.getStatusCode(), url, callId);
+    throw new ExternalApiException("Call fetch failed with " + response.getStatusCode());
+}
+```
+
+A 4xx from an external API is never "no data" — it's a contract violation. Throw on it.
+
+### 2. Validate the response body
+
+Even on 200, the body can be null or malformed.
+
+```java
+CallResponse body = response.getBody();
+if (body == null || body.getId() == null) {
+    log.error("External API returned empty response for callId={}", callId);
+    throw new ExternalApiException("Malformed response from calls API");
+}
+```
+
+### 3. Add contract assertions for critical fields
+
+For external APIs that are part of your critical path, assert the structure you depend on:
+
+```java
+// Fail loudly if the field we rely on disappears
+if (body.getStatus() == null) {
+    log.warn("External calls API missing 'status' field — API contract may have changed");
+    alertingService.fire("EXTERNAL_API_CONTRACT_DRIFT", "calls-api");
+}
+```
+
+If the field disappears tomorrow, you find out immediately — not when a user files a ticket three days later.
+
+### 4. Alert on warning logs in critical paths
+
+We had the warning in our logs. We just weren't alerting on it.
+
+Set up alerts for `WARN` logs that occur inside critical flows (payment processing, data sync, booking). Silent failures almost always leave a trace in warnings before they become incidents.
+
+## The deeper lesson
+
+External APIs are contracts you don't own. They can change without notice. And when they do, a 404 from a dependency doesn't always surface as an exception — sometimes it just results in nothing happening.
+
+Nothing happening is the worst kind of failure to debug. It leaves no immediate signal, no pager alert, no error rate spike. Just missing data that someone notices days later.
+
+**Treat external API responses like user input**: validate them. Don't assume the structure you saw yesterday is the structure you'll see tomorrow.
+
+The rule I follow now: **any call to an external API that can affect state in our system needs an explicit status check and a body validation**. Not optional. Not "we trust them." Always.

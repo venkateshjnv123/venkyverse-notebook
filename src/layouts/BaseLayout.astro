@@ -10,6 +10,7 @@ interface Props {
   ogType?: string;
   canonicalURL?: string;
   activePage?: string;
+  schema?: Record<string, any> | Record<string, any>[];
 }
 
 const {
@@ -19,9 +20,28 @@ const {
   ogType = 'website',
   canonicalURL = Astro.url.href,
   activePage,
+  schema,
 } = Astro.props;
 
 const fullTitle = title.includes('Venkatesh') ? title : `${title} · Venkatesh Patnala`;
+
+const person = {
+  '@context': 'https://schema.org',
+  '@type': 'Person',
+  name: 'Venkatesh Patnala',
+  url: 'https://venkyverse.space',
+  image: 'https://venkyverse.space/og-default.png',
+  jobTitle: 'Backend Engineer',
+  worksFor: { '@type': 'Organization', name: 'Cars24' },
+  alumniOf: { '@type': 'CollegeOrUniversity', name: 'Indian Institute of Technology Jodhpur' },
+  knowsAbout: ['Backend Engineering', 'Distributed Systems', 'System Design', 'Payments', 'AI'],
+  sameAs: [
+    'https://www.linkedin.com/in/venkatesh-patnala-927a521b0/',
+    'https://github.com/venkateshjnv123',
+  ],
+};
+
+const schemas = [person, ...(Array.isArray(schema) ? schema : schema ? [schema] : [])];
 ---
 <!doctype html>
 <html lang="en">
@@ -33,12 +53,18 @@ const fullTitle = title.includes('Venkatesh') ? title : `${title} · Venkatesh P
   <meta name="author" content="Venkatesh Patnala" />
   <link rel="canonical" href={canonicalURL} />
 
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+  <link rel="apple-touch-icon" href="/favicon.svg" />
+
   <!-- Open Graph -->
   <meta property="og:title" content={fullTitle} />
   <meta property="og:description" content={description} />
   <meta property="og:image" content={ogImage} />
   <meta property="og:type" content={ogType} />
   <meta property="og:url" content={canonicalURL} />
+  <meta property="og:site_name" content="Venkatesh Patnala" />
+  <meta property="og:image:alt" content="Venkatesh Patnala — backend engineer" />
 
   <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image" />
@@ -49,6 +75,10 @@ const fullTitle = title.includes('Venkatesh') ? title : `${title} · Venkatesh P
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  {schemas.map((s) => (
+    <script type="application/ld+json" set:html={JSON.stringify(s)} />
+  ))}
 </head>
 <body>
   <Nav activePage={activePage} />

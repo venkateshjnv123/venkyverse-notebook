@@ -1,18 +1,17 @@
 ---
-id: "001"
-title: "the user uploaded image B, saw image A, and filed a ticket"
-tagline: "Order of uploads ≠ order of webhook arrival. Distributed systems are fun, until time starts lying to you."
-tags: ['prod-bug', 'system-design']
+id: '001'
+title: the user uploaded image B, saw image A, and filed a ticket
+tagline: >-
+  Order of uploads ≠ order of webhook arrival. Distributed systems are fun,
+  until time starts lying to you.
+tags:
+  - prod-bug
+  - system-design
 date: 2026-04-01
 readTime: 4
-linkedin_url: ""
-draft: false
-signoff: "How did you handle out-of-order webhooks in your system?"
+draft: true
+signoff: How did you handle out-of-order webhooks in your system?
 ---
-
-import Callout from '../../components/Callout.astro'
-import Aside from '../../components/Aside.astro'
-
 We had a weird bug in prod.
 
 A user uploaded a car image, didn't like it, reuploaded a different one — and still saw the old one. Filed a ticket. We went in to investigate, and the system logs looked completely normal. The right image existed in storage. The URL in the database pointed to the new image. Everything *looked* fine.
@@ -50,7 +49,7 @@ upload A → upload B → webhook B → webhook A → DB = A ❌
 B was smaller. B's upload finished faster. B's webhook arrived first. Nothing wrong with the system — just physics.
 
 <Callout type="warning" label="The mental model trap">
-The order in which uploads happen is not the order in which the resulting webhooks arrive. Network latency, file size, server load — all of these can invert delivery order.
+  The order in which uploads happen is not the order in which the resulting webhooks arrive. Network latency, file size, server load — all of these can invert delivery order.
 </Callout>
 
 ## The root cause
@@ -71,7 +70,7 @@ WHERE car_id = $carId
 Only update if the incoming event is *newer* than what we currently have. The database becomes the arbiter of "latest."
 
 <Aside>
-A small tangent: this is also why I prefer version numbers over timestamps when you control both sides. Clocks lie. Sequence numbers don't.
+  A small tangent: this is also why I prefer version numbers over timestamps when you control both sides. Clocks lie. Sequence numbers don't.
 </Aside>
 
 ## What I'd do differently next time
@@ -81,5 +80,5 @@ I'd bake this check into the webhook handler as a default assumption rather than
 The cost is one extra column and one extra WHERE clause. The benefit is never debugging this class of bug again.
 
 <Callout type="info" label="The takeaway">
-Distributed systems don't give you ordering guarantees for free. If your handler assumes events arrive in the order they were created, you have a latent bug waiting for the right conditions to surface.
+  Distributed systems don't give you ordering guarantees for free. If your handler assumes events arrive in the order they were created, you have a latent bug waiting for the right conditions to surface.
 </Callout>

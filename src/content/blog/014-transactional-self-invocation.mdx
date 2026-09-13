@@ -1,0 +1,89 @@
+---
+id: "'014'"
+title: "'@Transactional Was There. Rollback Wasn''t.'"
+tagline: "Self-invocation is the sneakiest Spring trap."
+tags: ['prod-bug', 'system-design']
+date: 2026-05-25
+readTime: 3
+linkedin_url: "https://www.linkedin.com/posts/venkatesh-patnala-927a521b0_java-springboot-backenddevelopment-activity-7457617675834499072-HGn4?utm_source=share&utm_medium=member_desktop&rcm=ACoAADFG368BFeVJIpPKSrai_UiHr_xTBGS54Yw"
+hero_image: "/images/014-transactional-self-invocation/hero_image.jpg"
+draft: false
+signoff: "What's the sneakiest Spring moment you've hit?"
+---
+
+![@Transactional Was There. Rollback Wasn't.](/images/014-transactional-self-invocation/hero_image.jpg)
+
+`@Transactional` was right there. Rollback still didn't happen. 💀
+
+The flow: user completes payment → Order, Payment, and Inventory all update in one method. If one fails, rollback everything.
+
+Inventory update failed midway. The other two tables? Already committed. Inconsistent data sitting in prod, no rollback, no errors — just silent corruption. 💥
+
+!\[The problem: two tables committed, third failed — first two already committed]\(/images/transactional-no-rollback-1.png)
+
+## Why didn't rollback happen?
+
+We were calling the `@Transactional` method **from another method in the same class**.
+
+```java
+@Service
+public class MyService {
+
+    public void outerMethod() {
+        // some logic
+        this.innerTransactionalMethod(); // internal call
+    }
+
+    @Transactional
+    public void innerTransactionalMethod() {
+        // updates 3 tables
+    }
+}
+```
+
+It ran like a regular method. No transaction. No rollback.
+
+!\[Why rollback didn't happen: calling @Transactional from same class]\(/images/transactional-no-rollback-2.png)
+
+## How Spring @Transactional actually works
+
+Spring's `@Transactional` works through **proxies** — think of it as a wrapper around your bean from the outside.
+
+* **External call** → goes through the Spring proxy → transaction starts ✅
+* **Internal call** (`this.method()`) → bypasses the proxy entirely ❌
+
+So our "transactional" method was just a plain method call with no transaction context around it. Self-invocation is the real culprit.
+
+!\[How Spring proxy works: external vs internal call]\(/images/transactional-no-rollback-3.png)
+
+## The fix
+
+Move the `@Transactional` logic into a **separate bean** and call it externally:
+
+```java
+// Orchestrator — no @Transactional
+@Service
+public class MyService {
+    @Autowired
+    private TxService txService;
+
+    public void outerMethod() {
+        txService.innerTransactionalMethod(); // external call → proxy → ✅
+    }
+}
+
+// Separate bean — @Transactional works correctly here
+@Service
+public class TxService {
+    @Transactional
+    public void innerTransactionalMethod() {
+        // updates 3 tables — now properly wrapped in a transaction
+    }
+}
+```
+
+One small refactor. Rollback started working again. ✅
+
+!\[The fix: move @Transactional to a separate bean]\(/images/transactional-no-rollback-4.png)
+
+`@Transactional` doesn't protect you from *where* you call it from. The annotation is only as good as the proxy that wraps it.

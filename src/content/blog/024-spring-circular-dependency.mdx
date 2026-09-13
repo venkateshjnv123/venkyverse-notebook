@@ -1,0 +1,129 @@
+---
+id: "024"
+title: "Circular Dependency in Spring"
+tagline: "Circular dependency isn't a Spring problem. It's a design problem."
+tags: ['system-design', 'prod-bug']
+date: 2026-06-01
+readTime: 3
+linkedin_url: "https://www.linkedin.com/posts/venkatesh-patnala-927a521b0_java-springboot-backenddevelopment-activity-7464941023543144448-S4nX?utm_source=share&utm_medium=member_desktop&rcm=ACoAADFG368BFeVJIpPKSrai_UiHr_xTBGS54Yw"
+hero_image: "/images/024-spring-circular-dependency-hero.png"
+draft: false
+signoff: "How do you usually handle circular dependencies in your Spring apps?"
+---
+
+![Circular dependency in Spring: the problem, ways to break the loop, event-driven fix](/images/024-spring-circular-dependency-hero.png)
+
+```
+Error: The dependencies of some of the beans in the application context form a cycle:
+serviceA → serviceB → serviceA
+```
+
+Spring just... gave up.
+
+We added `@Lazy` and moved on. A week later, the same pattern appeared somewhere else. Then again. Then it clicked: Spring wasn't complaining about wiring. It was complaining about our design.
+
+## What circular dependency actually means
+
+<Mermaid code="flowchart LR\n    A[ServiceA] -->|depends on| B[ServiceB]\n    B -->|depends on| A\n    style A fill:#C4583A,color:#F7F5EE\n    style B fill:#C4583A,color:#F7F5EE" />
+
+ServiceA needs ServiceB to do its job. ServiceB needs ServiceA. Neither can be initialized without the other already existing.
+
+Spring detects this during context startup and refuses to proceed. It's not arbitrary strictness — if it tried to initialize ServiceA, it would need ServiceB, which needs ServiceA, which needs ServiceB... infinite recursion.
+
+## Why it keeps happening
+
+Usually it means two services are responsible for overlapping things. OfferService calls NotificationService, and NotificationService calls OfferService to fetch offer details for the template. Both own a piece of the same flow.
+
+## 3 ways to break the loop
+
+### 1. `@Lazy` — quick workaround
+
+```java
+@Service
+public class ServiceA {
+    @Lazy
+    @Autowired
+    private ServiceB serviceB;
+}
+```
+
+Delays ServiceB proxy initialization until first use. Breaks the startup cycle.
+
+This works, but it's a band-aid. The underlying coupling still exists. And `@Lazy` creates a proxy that can silently break `@Transactional` — the proxy wraps a proxy, and Spring's transaction proxy may not apply correctly.
+
+Use `@Lazy` only as a temporary fix while you refactor.
+
+### 2. Extract shared logic into a third service
+
+<Mermaid code="flowchart LR\n    A[ServiceA] --> S[SharedService]\n    B[ServiceB] --> S\n    style S fill:#0F4C3A,color:#F7F5EE" />
+
+Ask: *what does each service need from the other?* That shared logic belongs in its own service.
+
+```java
+// Before: NotificationService calls OfferService for offer details
+// OfferService calls NotificationService to trigger sends — cycle!
+
+// After: extract the shared lookup
+@Service
+public class OfferDetailService {
+    public OfferDetail getDetails(String offerId) { /* DB lookup */ }
+}
+
+@Service
+public class OfferService {
+    @Autowired private NotificationService notificationService;
+    @Autowired private OfferDetailService offerDetailService; // no cycle
+}
+
+@Service
+public class NotificationService {
+    @Autowired private OfferDetailService offerDetailService; // no cycle
+}
+```
+
+Clean separation. Both services pull from a shared data service — no circular calls.
+
+### 3. Event-driven communication — the right fix
+
+Instead of ServiceA calling ServiceB directly, it publishes an event. ServiceB listens.
+
+```java
+@Service
+public class OfferService {
+    @Autowired
+    private ApplicationEventPublisher eventPublisher;
+
+    public void acceptOffer(String offerId) {
+        // ... business logic
+        eventPublisher.publishEvent(new OfferAcceptedEvent(this, offerId));
+        // OfferService doesn't know or care who listens
+    }
+}
+
+@Service
+public class NotificationService {
+    @EventListener
+    public void handleOfferAccepted(OfferAcceptedEvent event) {
+        // Reacts to event — no direct dependency on OfferService
+        sendNotification(event.getOfferId());
+    }
+}
+```
+
+No direct coupling. No cycle. OfferService doesn't even know NotificationService exists.
+
+## Which approach to use
+
+| Approach | When |
+|---|---|
+| `@Lazy` | Temporary fix while refactoring |
+| Extract to SharedService | Both services genuinely need the same data |
+| Event-driven | A causes B, but A doesn't need B's result |
+
+## The real message
+
+When Spring throws the circular dependency error, it's not a wiring problem. It's a question: *why do these two services know about each other at all?*
+
+Usually the answer is: "because we didn't think clearly about who owns what."
+
+The error message is Spring saying: your service responsibilities are messy. It's usually right.

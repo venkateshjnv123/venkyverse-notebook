@@ -98,8 +98,10 @@ main, header, footer, nav {
 }
 .tag-pill.prod-bug      { color: #0F4C3A; background: #E6EFEA; }
 .tag-pill.system-design { color: #5A4499; background: #EBE5FA; }
+.tag-pill.patterns      { color: #A33D24; background: #F8E1D8; }
 .tag-pill.ai            { color: #A17617; background: #FDF3D9; }
 .tag-pill.career        { color: #A33D24; background: #F8E1D8; }
+.tag-pill.opinion       { color: #5C5C8A; background: #EEEEF8; }
 
 /* ─── Inline highlight ──────────────────────────────────── */
 .hl {

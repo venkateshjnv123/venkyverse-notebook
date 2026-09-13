@@ -1,0 +1,46 @@
+---
+interface Props {
+  code: string;
+}
+const { code } = Astro.props;
+// Keystatic writes multiline props as a JSX string attribute, where escape
+// sequences stay literal ("flowchart\n  A" keeps a backslash-n). Turn those
+// back into real newlines/tabs before handing the source to mermaid.
+const source = code.replace(/\\n/g, '\n').replace(/\\t/g, '\t');
+---
+<div class="mermaid-wrap">
+  <div class="mermaid">{source}</div>
+</div>
+<script>
+  import mermaid from 'mermaid';
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'base',
+    themeVariables: {
+      primaryColor: '#E6EFEA',
+      primaryTextColor: '#1A1A17',
+      primaryBorderColor: '#0F4C3A',
+      lineColor: '#1A1A17',
+      secondaryColor: '#F0EDE3',
+      tertiaryColor: '#F7F5EE',
+      background: '#F7F5EE',
+      mainBkg: '#F7F5EE',
+      nodeBorder: '#0F4C3A',
+      clusterBkg: '#F0EDE3',
+      titleColor: '#1A1A17',
+      edgeLabelBackground: '#F7F5EE',
+      fontFamily: 'JetBrains Mono, Courier New, monospace',
+    },
+  });
+</script>
+<style>
+  .mermaid-wrap {
+    margin: 1.75rem 0;
+    overflow-x: auto;
+    text-align: center;
+  }
+  .mermaid-wrap :global(svg) {
+    max-width: 100%;
+    font-family: var(--font-mono);
+  }
+</style>

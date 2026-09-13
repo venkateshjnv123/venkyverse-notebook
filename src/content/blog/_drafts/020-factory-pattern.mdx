@@ -1,0 +1,126 @@
+---
+id: "020"
+title: "We Were Changing 13 Files to Add One Field"
+tagline: "Factory Pattern isn't about fewer lines. It's about fewer places to touch."
+tags: ['patterns', 'system-design']
+date: 2026-06-10
+readTime: 3
+linkedin_url: ""
+hero_image: ""
+draft: true
+signoff: "What's your favourite use case of the Factory pattern?"
+---
+
+
+We send 10s of notifications. Offer accepted. Payment refunded. Test drive scheduled.
+
+Every notification needs a name, phone number, template ID, and a few metadata fields. Simple enough.
+
+At first, every event service built its own notification object inline. The same `.setName()`, `.setPhone()`, `.setTemplateId()` — copied across 13 files.
+
+Then the PM asked us to add one new field to every notification. We touched 13 files. Missed one. Silent bug in prod.
+
+That felt wrong.
+
+## The problem
+
+<Mermaid code="flowchart LR\n    A[OfferService] -->|builds Notification| N1[Notification]\n    B[PaymentService] -->|builds Notification| N2[Notification]\n    C[TestDriveService] -->|builds Notification| N3[Notification]\n    D[InspectionService] -->|builds Notification| N4[Notification]\n    style A fill:#C4583A,color:#F7F5EE\n    style B fill:#C4583A,color:#F7F5EE\n    style C fill:#C4583A,color:#F7F5EE\n    style D fill:#C4583A,color:#F7F5EE" />
+
+Every service knew *how* to build a notification. Construction logic was tangled with business logic. Adding a field meant touching every caller.
+
+## Factory Pattern
+
+One place knows how to build the object. Everyone else just asks.
+
+<Mermaid code="flowchart LR\n    A[OfferService] -->|create| F[NotificationFactory]\n    B[PaymentService] -->|create| F\n    C[TestDriveService] -->|create| F\n    D[InspectionService] -->|create| F\n    F --> N[Notification]\n    style F fill:#0F4C3A,color:#F7F5EE" />
+
+```java
+// Before: every service builds it themselves
+@Service
+public class OfferService {
+    public void onOfferAccepted(Offer offer, User user) {
+        Notification notification = new Notification();
+        notification.setName(user.getName());
+        notification.setPhone(user.getPhone());
+        notification.setTemplateId("OFFER_ACCEPTED");
+        notification.setLanguage(user.getPreferredLanguage());
+        // ... more fields
+        notificationService.send(notification);
+    }
+}
+
+// After: factory owns construction
+@Service
+public class OfferService {
+    @Autowired
+    private NotificationFactory notificationFactory;
+
+    public void onOfferAccepted(Offer offer, User user) {
+        Notification notification = notificationFactory.create("OFFER_ACCEPTED", offer, user);
+        notificationService.send(notification);
+    }
+}
+```
+
+The factory centralizes all construction rules:
+
+```java
+@Component
+public class NotificationFactory {
+
+    public Notification create(String templateId, Object event, User user) {
+        return Notification.builder()
+            .name(user.getName())
+            .phone(user.getPhone())
+            .templateId(templateId)
+            .language(user.getPreferredLanguage())
+            .metadata(buildMetadata(event))
+            .channel(resolveChannel(user))
+            .build();
+    }
+
+    private Map<String, String> buildMetadata(Object event) {
+        // shared metadata extraction logic — one place, always consistent
+        if (event instanceof Offer offer) {
+            return Map.of("offerId", offer.getId(), "vehicleId", offer.getVehicleId());
+        }
+        if (event instanceof Payment payment) {
+            return Map.of("paymentId", payment.getId(), "amount", payment.getAmount().toString());
+        }
+        return Map.of();
+    }
+
+    private NotificationChannel resolveChannel(User user) {
+        return user.hasWhatsApp() ? NotificationChannel.WHATSAPP : NotificationChannel.SMS;
+    }
+}
+```
+
+Now adding a new field means updating exactly one class. The 13 services that call the factory? They don't change.
+
+## Adding a new notification type
+
+Before: create a new service, copy the notification-building code, hope you copy it right.
+
+After: create a new service, call `notificationFactory.create("NEW_TEMPLATE", event, user)`. Done.
+
+```java
+// New service, zero notification construction code
+@Service
+public class InspectionService {
+    public void onInspectionComplete(Inspection inspection, User user) {
+        Notification n = notificationFactory.create("INSPECTION_DONE", inspection, user);
+        notificationService.send(n);
+    }
+}
+```
+
+## Why this matters
+
+It was never about fewer lines of code.
+
+It was about **how many places you touch to add one field**.
+
+13 files = 13 chances to miss one = 13 silent bugs waiting in prod.
+
+1 factory = 1 change = done.

@@ -1,0 +1,513 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection, render, type CollectionEntry } from 'astro:content';
+import Callout from '../../components/Callout.astro';
+import Aside from '../../components/Aside.astro';
+import Diagram from '../../components/Diagram.astro';
+import Highlight from '../../components/Highlight.astro';
+import Mermaid from '../../components/Mermaid.astro';
+
+const mdxComponents = { Callout, Aside, Diagram, Highlight, Mermaid };
+
+export async function getStaticPaths() {
+  const entries = await getCollection('interviews', ({ data }) => !data.draft);
+  return entries.map(entry => ({
+    params: { slug: entry.id },
+    props: { entry },
+  }));
+}
+
+interface Props {
+  entry: CollectionEntry<'interviews'>;
+}
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+const d = entry.data;
+
+const verdictLabel: Record<string, string> = {
+  offer: 'offer',
+  rejected: 'rejected',
+  withdrawn: 'withdrawn',
+  'in-progress': 'in progress',
+};
+
+function formatDate(date: Date) {
+  return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+}
+
+const currentURL = Astro.url.href;
+
+const schema = {
+  '@context': 'https://schema.org',
+  '@type': 'BlogPosting',
+  headline: `${d.company} ${d.role} interview experience`,
+  description: d.tagline,
+  datePublished: d.date.toISOString(),
+  url: currentURL,
+  mainEntityOfPage: currentURL,
+  author: { '@type': 'Person', name: 'Venkatesh Patnala', url: 'https://venkyverse.space' },
+  publisher: { '@type': 'Person', name: 'Venkatesh Patnala', url: 'https://venkyverse.space' },
+};
+---
+<BaseLayout
+  title={`${d.company} · ${d.role} interview experience`}
+  description={d.tagline}
+  ogType="article"
+  canonicalURL={currentURL}
+  schema={schema}
+>
+
+  <div class="progress" id="progress-bar">
+    <div class="progress-fill" id="progress-fill"></div>
+  </div>
+
+  <header class="iv-header">
+    <div class="header-inner">
+      <nav class="breadcrumbs" aria-label="breadcrumb">
+        <a href="/life" class="bc-link">life</a>
+        <span class="bc-sep">/</span>
+        <a href="/interviews" class="bc-link">interviews</a>
+        <span class="bc-sep">/</span>
+        <span class="bc-current">{d.company}</span>
+      </nav>
+
+      <div class="post-id-line">
+        <span class="post-id">
+          {d.role.toUpperCase()} · {formatDate(d.date).toUpperCase()}
+          {d.mode ? ` · ${d.mode.toUpperCase()}` : ''} · {d.rounds.length} ROUND{d.rounds.length === 1 ? '' : 'S'}
+        </span>
+      </div>
+
+      <h1 class="post-h1">{d.company}</h1>
+      <div class="post-tagline">{d.tagline}</div>
+
+      <span class={`verdict-pill verdict--${d.verdict}`}>
+        {d.verdictNote || verdictLabel[d.verdict]}
+      </span>
+    </div>
+  </header>
+
+  <!-- Round cards -->
+  {d.rounds.length > 0 && (
+    <section class="rounds-wrap">
+      <div class="rounds">
+        <div class="rounds-kicker">~/rounds</div>
+        {d.rounds.map(round => (
+          <article class="round-card">
+            <div class="round-card__head">
+              <span class="round-card__n">R{round.n}</span>
+              <h2 class="round-card__name">{round.name}</h2>
+              {round.outcome && <span class="round-card__outcome">{round.outcome}</span>}
+            </div>
+
+            {round.topics.length > 0 && (
+              <div class="round-topics">
+                {round.topics.map(t => <span class="topic-pill">{t}</span>)}
+              </div>
+            )}
+
+            {round.questions.length > 0 && (
+              <ul class="round-questions">
+                {round.questions.map(q => (
+                  <li class="round-question">
+                    {q.url
+                      ? <a href={q.url} target="_blank" rel="noopener noreferrer">{q.title} <span class="q-ext">↗</span></a>
+                      : <span>{q.title}</span>
+                    }
+                  </li>
+                ))}
+              </ul>
+            )}
+          </article>
+        ))}
+      </div>
+    </section>
+  )}
+
+  <article class="article-wrap">
+    <div class="article">
+      <Content components={mdxComponents} />
+    </div>
+  </article>
+
+  <footer class="article-footer">
+    <div class="footer-inner-post">
+      {d.signoff && <p class="signoff">{d.signoff}</p>}
+      <a href="/interviews" class="back-link">← all interview write-ups</a>
+    </div>
+  </footer>
+
+</BaseLayout>
+
+<style>
+.progress {
+  position: sticky;
+  top: 38px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: rgba(15, 76, 58, 0.08);
+  z-index: 99;
+}
+
+.progress-fill {
+  height: 100%;
+  background: #0F4C3A;
+  width: 0%;
+  transition: width 0.1s ease-out;
+}
+
+/* ─── Header ────────────────────────────────────────────── */
+.iv-header {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.header-inner {
+  padding: 2rem 2rem;
+  border-bottom: 0.5px dashed #D9D5C7;
+}
+
+.breadcrumbs {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: #8A8A82;
+  letter-spacing: 0.04em;
+  margin-bottom: 1.5rem;
+}
+
+.bc-link { color: #4A4A45; text-decoration: none; }
+.bc-link:hover { color: #0F4C3A; }
+.bc-sep { color: #C4C0B2; margin: 0 8px; }
+.bc-current { color: #0F4C3A; font-weight: 500; }
+
+.post-id-line { margin-bottom: 1rem; }
+
+.post-id {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: #C4583A;
+  letter-spacing: 0.08em;
+  font-weight: 500;
+}
+
+.post-id::before {
+  content: '';
+  display: inline-block;
+  width: 20px;
+  height: 1.5px;
+  background: #C4583A;
+  margin-right: 10px;
+  vertical-align: middle;
+}
+
+.post-h1 {
+  font-family: var(--font-serif);
+  font-size: 42px;
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: #1A1A17;
+  margin-bottom: 1.25rem;
+}
+
+.post-tagline {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 18px;
+  color: #4A4A45;
+  line-height: 1.45;
+  padding-left: 16px;
+  border-left: 3px solid #D69E2E;
+  margin-bottom: 1.5rem;
+}
+
+.verdict-pill {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 5px 10px;
+  border-radius: 999px;
+}
+
+.verdict--offer {
+  background: rgba(15, 76, 58, 0.1);
+  color: #0F4C3A;
+  border: 0.5px solid rgba(15, 76, 58, 0.35);
+}
+
+.verdict--rejected {
+  background: rgba(196, 88, 58, 0.1);
+  color: #C4583A;
+  border: 0.5px solid rgba(196, 88, 58, 0.35);
+}
+
+.verdict--withdrawn,
+.verdict--in-progress {
+  background: rgba(214, 158, 46, 0.12);
+  color: #A17617;
+  border: 0.5px solid rgba(214, 158, 46, 0.4);
+}
+
+/* ─── Round cards ───────────────────────────────────────── */
+.rounds-wrap {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.rounds {
+  padding: 2rem 2rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.rounds-kicker {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: #8A8A82;
+  letter-spacing: 0.08em;
+}
+
+.round-card {
+  background: linear-gradient(160deg, #F0EDE3, #E9E5D8);
+  border: 0.5px solid #D9D5C7;
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
+}
+
+.round-card__head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+
+.round-card__n {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  color: #F7F5EE;
+  background: #0F4C3A;
+  border-radius: 4px;
+  padding: 3px 7px;
+}
+
+.round-card__name {
+  font-family: var(--font-serif);
+  font-size: 20px;
+  font-weight: 400;
+  color: #1A1A17;
+  margin: 0;
+  flex: 1;
+}
+
+.round-card__outcome {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: #8A8A82;
+  letter-spacing: 0.04em;
+}
+
+.round-topics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 0.85rem;
+}
+
+.topic-pill {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: #4A4A45;
+  background: #FDFCF6;
+  border: 0.5px solid #D9D5C7;
+  border-radius: 5px;
+  padding: 3px 8px;
+}
+
+.round-questions {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.round-question {
+  font-family: var(--font-serif);
+  font-size: 15px;
+  color: #1A1A17;
+  padding-left: 16px;
+  position: relative;
+  line-height: 1.45;
+}
+
+.round-question::before {
+  content: '›';
+  position: absolute;
+  left: 0;
+  color: #C4583A;
+  font-family: var(--font-mono);
+}
+
+.round-question a {
+  color: #0F4C3A;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(15, 76, 58, 0.3);
+}
+
+.round-question a:hover { border-bottom-color: #0F4C3A; }
+
+.q-ext {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: #8A8A82;
+}
+
+/* ─── Article body (mirrors writing/[slug]) ─────────────── */
+.article-wrap {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.article {
+  font-family: var(--font-serif);
+  font-size: 18px;
+  line-height: 1.7;
+  color: #1A1A17;
+  padding: 2rem 2rem 3rem;
+}
+
+.article :global(p) { margin-bottom: 1.5rem; }
+
+.article :global(a) {
+  color: #0F4C3A;
+  border-bottom: 1px solid currentColor;
+  padding-bottom: 1px;
+}
+
+.article :global(strong) { font-weight: 500; color: #0F4C3A; }
+.article :global(em) { font-style: italic; color: #4A4A45; }
+
+.article :global(ul),
+.article :global(ol) {
+  margin: 0 0 1.5rem 1.5rem;
+  padding-left: 0.5rem;
+}
+
+.article :global(li) { margin-bottom: 0.5rem; }
+
+.article :global(h2) {
+  font-family: var(--font-serif);
+  font-size: 26px;
+  font-weight: 500;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  margin: 2.5rem 0 1rem;
+}
+
+.article :global(h2 em) { font-style: italic; color: #0F4C3A; }
+
+.article :global(h3) {
+  font-family: var(--font-serif);
+  font-size: 20px;
+  font-weight: 500;
+  margin: 1.75rem 0 0.75rem;
+}
+
+.article :global(code:not([class*="language"])) {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  background: #FDF3D9;
+  color: #A17617;
+  padding: 1px 6px;
+  border-radius: 3px;
+  border-bottom: 1px solid rgba(214, 158, 46, 0.3);
+}
+
+.article :global(pre) {
+  background: #1A1A17;
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  margin: 1.5rem 0;
+  overflow-x: auto;
+}
+
+.article :global(pre code) {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: #F7F5EE;
+  line-height: 1.6;
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+/* ─── Footer ────────────────────────────────────────────── */
+.article-footer {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.footer-inner-post {
+  padding: 2rem;
+  border-top: 0.5px dashed #D9D5C7;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.signoff {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 18px;
+  line-height: 1.5;
+  color: #0F4C3A;
+  margin: 0;
+}
+
+.back-link {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: #4A4A45;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+}
+
+.back-link:hover { color: #0F4C3A; }
+
+@media (max-width: 700px) {
+  .post-h1 { font-size: 30px; }
+  .article { font-size: 17px; }
+  .article :global(h2) { font-size: 22px; }
+}
+</style>
+
+<script>
+const progressFill = document.getElementById('progress-fill');
+
+function updateProgress() {
+  if (!progressFill) return;
+  const scrollTop = window.scrollY;
+  const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+  const pct = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+  progressFill.style.width = `${Math.min(pct, 100)}%`;
+}
+
+let ticking = false;
+window.addEventListener('scroll', () => {
+  if (!ticking) {
+    requestAnimationFrame(() => {
+      updateProgress();
+      ticking = false;
+    });
+    ticking = true;
+  }
+});
+</script>

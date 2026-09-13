@@ -1,0 +1,487 @@
+---
+/**
+ * BookIntro.astro
+ * ------------------------------------------------------------------
+ * Opening sequence for the homepage.
+ *   0.00s  overlay is already painted (paper), book settles in
+ *   0.35s  front cover swings open on the spine (real 3D rotateY)
+ *   1.15s  pen glides in, nib traces the baseline, "venkyverse"
+ *          is revealed under the nib, then a swash underlines it
+ *   2.25s  pen lifts, book zooms out, overlay cross-fades to site
+ *   ~2.7s  node removed, scroll unlocked
+ *
+ * - Plays once per session (sessionStorage).
+ * - Skipped entirely for prefers-reduced-motion.
+ * - Any click / key / scroll / touch aborts instantly.
+ * - No images, no extra fonts, no dependencies.
+ * ------------------------------------------------------------------
+ */
+---
+
+<div id="book-intro" class="bi" role="presentation" aria-hidden="true">
+  <div class="bi__stage">
+    <div class="bi__book">
+      <!-- right-hand inner page (revealed once the cover swings away) -->
+      <div class="bi__page bi__page--right">
+        <div class="bi__rules"></div>
+        <svg class="bi__write" viewBox="0 0 320 200" fill="none" aria-hidden="true">
+          <defs>
+            <mask id="bi-reveal">
+              <rect class="bi__wipe" x="18" y="38" width="268" height="112" fill="#fff" />
+            </mask>
+          </defs>
+
+          <!-- the word, revealed left→right under the nib -->
+          <g mask="url(#bi-reveal)">
+            <text
+              class="bi__word"
+              x="26"
+              y="110"
+              textLength="250"
+              lengthAdjust="spacingAndGlyphs"
+            >venkyverse</text>
+          </g>
+
+          <!-- underline swash, drawn after the word lands -->
+          <path
+            class="bi__swash"
+            d="M28 128 C 92 143, 196 143, 276 123"
+            stroke="#C4583A"
+            stroke-width="2.5"
+            stroke-linecap="round"
+          />
+
+          <!-- the pen -->
+          <g class="bi__pen">
+            <g transform="rotate(-30)">
+              <path d="M0 0 L4.5 -11 L-4.5 -11 Z" fill="#1A1A17" />
+              <rect x="-5" y="-60" width="10" height="49" rx="3" fill="#0F4C3A" />
+              <rect x="-5.4" y="-36" width="10.8" height="5" fill="#D69E2E" />
+              <rect x="-3.5" y="-76" width="7" height="18" rx="3.5" fill="#1A1A17" />
+            </g>
+          </g>
+        </svg>
+      </div>
+
+      <!-- the swinging leaf: front = cover, back = left inner page -->
+      <div class="bi__leaf">
+        <div class="bi__face bi__face--cover">
+          <span class="bi__spine"></span>
+          <span class="bi__ribbon"></span>
+          <div class="bi__mono">
+            <span class="bi__mark">V</span>
+            <span class="bi__coverName">venkyverse</span>
+            <span class="bi__coverSub">backend · systems · notes</span>
+          </div>
+        </div>
+        <div class="bi__face bi__face--inner">
+          <div class="bi__rules"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <button type="button" class="bi__skip" id="bi-skip">skip ↓</button>
+</div>
+
+<style is:global>
+  /* hero holds back a beat so the site "settles" in rather than snapping */
+  html.bi-lock,
+  html.bi-lock body { overflow: hidden; }
+  html.bi-lock main > .hero { opacity: 0; transform: translateY(12px); }
+  main > .hero {
+    transition: opacity 0.55s ease 0.1s, transform 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.1s;
+  }
+</style>
+
+<style>
+  /* ── timing knobs ──────────────────────────────────────── */
+  .bi {
+    --t-open: 0.35s;      /* cover starts swinging   */
+    --d-open: 0.8s;       /* cover swing duration    */
+    --t-pen: 1.05s;       /* pen fades in            */
+    --t-write: 1.2s;      /* nib starts moving       */
+    --d-write: 0.8s;      /* writing duration        */
+    --t-swash: 1.98s;
+    --t-out: 2.25s;       /* cross-fade begins       */
+    --d-out: 0.45s;
+
+    --leaf-w: min(43vw, 330px);
+    --leaf-h: min(58vh, 430px);
+  }
+
+  /* ── overlay ───────────────────────────────────────────── */
+  .bi {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: grid;
+    place-items: center;
+    background: var(--color-paper, #f7f5ee);
+    overflow: hidden;
+  }
+  .bi::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(to right, rgba(26, 26, 23, 0.045) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(26, 26, 23, 0.045) 1px, transparent 1px);
+    background-size: 28px 28px;
+    pointer-events: none;
+  }
+
+  .bi__stage {
+    position: relative;
+    perspective: 1800px;
+    perspective-origin: 50% 45%;
+    opacity: 0;
+  }
+
+  .bi__book {
+    position: relative;
+    width: calc(var(--leaf-w) * 2);
+    height: var(--leaf-h);
+    transform-style: preserve-3d;
+    /* closed book sits on the right half — nudge it back to centre */
+    transform: translateX(-25%);
+  }
+
+  /* ── pages ─────────────────────────────────────────────── */
+  .bi__page,
+  .bi__face {
+    position: absolute;
+    top: 0;
+    width: var(--leaf-w);
+    height: 100%;
+    border-radius: 3px 10px 10px 3px;
+    background: var(--color-paper-card, #fdfcf6);
+    box-shadow:
+      inset 14px 0 22px -18px rgba(26, 26, 23, 0.5),
+      0 18px 40px -22px rgba(26, 26, 23, 0.4);
+    overflow: hidden;
+  }
+
+  .bi__page--right { left: var(--leaf-w); }
+
+  .bi__rules {
+    position: absolute;
+    inset: 34px 26px;
+    background-image: linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent 25px,
+      rgba(26, 26, 23, 0.07) 25px,
+      rgba(26, 26, 23, 0.07) 26px
+    );
+    background-size: 100% 26px;
+    opacity: 0.9;
+  }
+
+  /* ── the swinging leaf ─────────────────────────────────── */
+  .bi__leaf {
+    position: absolute;
+    top: 0;
+    left: var(--leaf-w);
+    width: var(--leaf-w);
+    height: 100%;
+    transform-style: preserve-3d;
+    transform-origin: left center;
+    will-change: transform;
+  }
+  .bi__face {
+    left: 0;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+  .bi__face--inner {
+    transform: rotateY(180deg);
+    border-radius: 10px 3px 3px 10px;
+    box-shadow:
+      inset -14px 0 22px -18px rgba(26, 26, 23, 0.5),
+      0 18px 40px -22px rgba(26, 26, 23, 0.4);
+  }
+
+  /* ── the cover ─────────────────────────────────────────── */
+  .bi__face--cover {
+    background: linear-gradient(145deg, #16543f 0%, #0f4c3a 48%, #0b3b2d 100%);
+    display: grid;
+    place-items: center;
+  }
+  .bi__spine {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 12px;
+    background: linear-gradient(to right, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0));
+  }
+  .bi__ribbon {
+    position: absolute;
+    right: 16%;
+    top: -6px;
+    width: 14px;
+    height: 42%;
+    background: var(--color-coral, #c4583a);
+    box-shadow: 0 6px 10px -6px rgba(0, 0, 0, 0.6);
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 86%, 0 100%);
+  }
+  .bi__mono {
+    display: grid;
+    justify-items: center;
+    gap: 0.55rem;
+    color: #f2efe4;
+    text-align: center;
+    padding: 0 1.5rem;
+  }
+  .bi__mark {
+    width: 3.2rem;
+    height: 3.2rem;
+    display: grid;
+    place-items: center;
+    border: 1.5px dashed rgba(242, 239, 228, 0.55);
+    border-radius: 50%;
+    font-family: var(--font-serif, Georgia, serif);
+    font-style: italic;
+    font-size: 1.6rem;
+    line-height: 1;
+  }
+  .bi__coverName {
+    font-family: var(--font-serif, Georgia, serif);
+    font-style: italic;
+    font-size: clamp(1.3rem, 3.4vw, 1.9rem);
+    letter-spacing: -0.01em;
+  }
+  .bi__coverSub {
+    font-family: var(--font-mono, monospace);
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: rgba(242, 239, 228, 0.55);
+  }
+
+  /* ── the handwriting ───────────────────────────────────── */
+  .bi__write {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+  .bi__word {
+    font-family: var(--font-serif, Georgia, serif);
+    font-style: italic;
+    font-size: 48px;
+    fill: var(--color-green, #0f4c3a);
+    letter-spacing: -0.015em;
+  }
+  .bi__wipe {
+    transform-box: fill-box;
+    transform-origin: 0% 50%;
+    transform: scaleX(0);
+  }
+  .bi__swash {
+    stroke-dasharray: 300;
+    stroke-dashoffset: 300;
+  }
+  .bi__pen {
+    opacity: 0;
+    transform: translate(26px, 114px);
+  }
+
+  /* ── skip ──────────────────────────────────────────────── */
+  .bi__skip {
+    position: absolute;
+    bottom: clamp(1.25rem, 5vh, 2.5rem);
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: var(--font-mono, monospace);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-ink-faint, #8a8a82);
+    padding: 8px 14px;
+    border-radius: 6px;
+    opacity: 0;
+    transition: color 0.2s, background 0.2s;
+  }
+  .bi__skip:hover,
+  .bi__skip:focus-visible {
+    color: var(--color-green, #0f4c3a);
+    background: var(--color-green-soft, #e6efea);
+  }
+
+  /* ── the sequence ──────────────────────────────────────── */
+  .bi.is-playing .bi__leaf {
+    animation: bi-flip var(--d-open) cubic-bezier(0.66, 0.02, 0.24, 1) var(--t-open) both;
+  }
+  .bi.is-playing .bi__book {
+    animation: bi-recentre var(--d-open) cubic-bezier(0.5, 0.1, 0.25, 1) var(--t-open) both;
+  }
+  .bi.is-playing .bi__wipe {
+    animation: bi-write var(--d-write) linear var(--t-write) both;
+  }
+  .bi.is-playing .bi__pen {
+    animation:
+      bi-nib var(--d-write) linear var(--t-write) both,
+      bi-penfade 1.5s ease var(--t-pen) both;
+  }
+  .bi.is-playing .bi__swash {
+    animation: bi-swash 0.32s ease-out var(--t-swash) both;
+  }
+  .bi.is-playing .bi__skip {
+    animation: bi-skipin 0.4s ease 0.6s both;
+  }
+  .bi.is-playing {
+    animation: bi-fadeout var(--d-out) ease var(--t-out) forwards;
+  }
+  .bi.is-playing .bi__stage {
+    animation:
+      bi-settle 0.45s cubic-bezier(0.22, 1, 0.36, 1) both,
+      bi-zoom var(--d-out) cubic-bezier(0.4, 0, 1, 1) var(--t-out) forwards;
+  }
+
+  /* abort → snap out fast */
+  .bi.is-skipping {
+    animation: bi-fadeout 0.22s ease both !important;
+  }
+
+  @keyframes bi-settle {
+    from { opacity: 0; transform: translateY(16px) scale(0.965); }
+    to   { opacity: 1; transform: none; }
+  }
+  @keyframes bi-flip {
+    from { transform: rotateY(0deg); }
+    to   { transform: rotateY(-180deg); }
+  }
+  @keyframes bi-recentre {
+    from { transform: translateX(-25%); }
+    to   { transform: translateX(0); }
+  }
+  @keyframes bi-write {
+    from { transform: scaleX(0); }
+    to   { transform: scaleX(1); }
+  }
+  @keyframes bi-nib {
+    from { transform: translate(26px, 114px); }
+    to   { transform: translate(278px, 114px); }
+  }
+  @keyframes bi-penfade {
+    0%   { opacity: 0; }
+    12%  { opacity: 1; }
+    82%  { opacity: 1; }
+    100% { opacity: 0; }
+  }
+  @keyframes bi-swash {
+    from { stroke-dashoffset: 300; }
+    to   { stroke-dashoffset: 0; }
+  }
+  @keyframes bi-skipin {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+  @keyframes bi-fadeout {
+    from { opacity: 1; }
+    to   { opacity: 0; visibility: hidden; }
+  }
+  @keyframes bi-zoom {
+    from { transform: none; opacity: 1; }
+    to   { transform: scale(1.06); opacity: 0; }
+  }
+
+  /* ── phones ────────────────────────────────────────────── */
+  @media (max-width: 720px) {
+    .bi {
+      --leaf-w: min(45vw, 260px);
+      --leaf-h: min(52vh, 340px);
+    }
+    .bi__rules { inset: 24px 18px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .bi { display: none; }
+  }
+</style>
+
+<script is:inline>
+  (function () {
+    var root = document.getElementById('book-intro');
+    if (!root) return;
+
+    var html = document.documentElement;
+
+    function seen() {
+      try { return sessionStorage.getItem('venkyverse:intro') === '1'; } catch (e) { return false; }
+    }
+    function markSeen() {
+      try { sessionStorage.setItem('venkyverse:intro', '1'); } catch (e) {}
+    }
+
+    var reduced =
+      window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (reduced || seen()) {
+      root.parentNode && root.parentNode.removeChild(root);
+      return;
+    }
+
+    // the overlay must sit above the fixed nav, so hoist it out of <main>
+    if (root.parentNode !== document.body) document.body.appendChild(root);
+
+    html.classList.add('bi-lock');
+    markSeen();
+
+    var done = false;
+    var timer;
+
+    function finish() {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      html.classList.remove('bi-lock');
+      window.removeEventListener('keydown', abort);
+      window.removeEventListener('wheel', abort);
+      window.removeEventListener('touchmove', abort);
+      root.removeEventListener('click', abort);
+      if (root.parentNode) root.parentNode.removeChild(root);
+    }
+
+    function abort() {
+      if (done) return;
+      root.classList.add('is-skipping');
+      html.classList.remove('bi-lock');
+      clearTimeout(timer);
+      timer = setTimeout(finish, 240);
+    }
+
+    window.addEventListener('keydown', abort);
+    window.addEventListener('wheel', abort, { passive: true });
+    window.addEventListener('touchmove', abort, { passive: true });
+    root.addEventListener('click', abort);
+
+    var started = false;
+
+    function begin() {
+      if (started) return;
+      started = true;
+      root.classList.add('is-playing');
+      // release the hero a touch before the overlay is gone
+      setTimeout(function () { html.classList.remove('bi-lock'); }, 2300);
+      timer = setTimeout(finish, 2800);
+    }
+
+    if (document.hidden) {
+      // background tab: rAF and CSS animations are throttled — wait for focus
+      document.addEventListener('visibilitychange', function onVis() {
+        if (document.hidden) return;
+        document.removeEventListener('visibilitychange', onVis);
+        begin();
+      });
+    } else {
+      requestAnimationFrame(function () { requestAnimationFrame(begin); });
+      setTimeout(begin, 120); // fallback if rAF is throttled
+    }
+
+    // failsafe: never leave the page locked
+    setTimeout(function () { if (!done) finish(); }, 15000);
+  })();
+</script>

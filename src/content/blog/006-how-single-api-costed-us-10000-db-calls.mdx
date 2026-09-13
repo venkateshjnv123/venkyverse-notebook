@@ -6,10 +6,12 @@ tags: ['prod-bug', 'system-design']
 date: 2026-05-01
 readTime: 2
 linkedin_url: "https://www.linkedin.com/posts/venkatesh-patnala-927a521b0_java-springboot-backenddevelopment-share-7455470853275713536-Dfz1?utm_source=share&utm_medium=member_desktop&rcm=ACoAADFG368BFeVJIpPKSrai_UiHr_xTBGS54Yw"
-hero_image: ""
+hero_image: "/images/006-how-single-api-costed-us-10000-db-calls-hero.png"
 draft: false
 signoff: "What's the sneakiest N+1 you've caught in prod?"
 ---
+
+![N+1 Query Problem: loop queries vs batch query fix](/images/006-how-single-api-costed-us-10000-db-calls-hero.png)
 
 10,000 DB queries. Per. API. Call. 💀
 
@@ -20,8 +22,6 @@ We had a loop that called `save()` on every entity individually. Looked harmless
 Then production came in.
 
 10k entities → 10k DB hits → 5 second response time. Classic N+1 query, hiding in plain sight.
-
-![N+1 Query Problem: loop queries vs batch query fix](/images/n-plus-1-query-problem.png)
 
 **What's actually happening:**
 

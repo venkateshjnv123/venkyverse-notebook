@@ -1,0 +1,60 @@
+---
+id: "018"
+title: "AI Wrote the Code. We Debugged the Fire."
+tagline: "It worked in staging. Production had 10 million rows."
+tags: ['prod-bug', 'ai']
+date: 2026-05-25
+readTime: 2
+linkedin_url: ""
+hero_image: ""
+draft: true
+signoff: "What's the worst performance issue you've faced in production?"
+---
+
+We shipped an entire feature using AI (Codex).
+
+Production started breathing fire. 🔥
+
+Everything worked fine in localhost and staging. Then in production:
+
+- APIs taking 5–10 seconds
+- System slowing down under load
+- Some requests timing out
+
+We started debugging. The problem wasn't infra. Wasn't traffic.
+
+It was the code Codex generated.
+
+## What went wrong
+
+**1. Count + data in the same query**
+
+Codex combined paginated data and total count into a single query. On millions of rows, that count scan runs every time — expensive and unnecessary once the result is cached.
+
+**2. Index on everything**
+
+An index was added on almost every column, including low-usage ones. More indexes = slower writes, bloated storage, and the query planner sometimes picks the wrong one.
+
+**3. Unnecessary computations**
+
+Fields were being calculated on every response where a direct DB value would've done the job. Fine for 100 rows. Brutal at scale.
+
+In localhost? Barely noticeable. Running on millions of rows = disaster.
+
+## What we fixed
+
+- Added proper DB indexing (unique and composite) on high-usage paths only
+- Separated count and data queries — count cached separately
+- Removed unnecessary mid-flight calculations
+
+Latency dropped to **~50ms average**. 🚀
+
+---
+
+We even added a rule to our `AGENTS.md`:
+
+> "Don't create or touch DB queries without our permission."
+
+AI can generate working code. But it doesn't understand production scale, data size, or query cost. That part is still on us.
+
+Otherwise, be ready to debug on a Saturday afternoon. 😄

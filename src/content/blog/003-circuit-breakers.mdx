@@ -5,22 +5,17 @@ tagline: "Timeouts + breakers + smart ramp-up — three layers, one pattern."
 tags: ['system-design', 'prod-bug']
 date: 2026-02-10
 readTime: 4
-linkedin_url: ""
-hero_image: ""
+linkedin_url: "https://www.linkedin.com/posts/venkatesh-patnala-927a521b0_systemdesign-softwareengineering-distributedsystems-activity-7449472442332319746-UDdQ?utm_source=share&utm_medium=member_desktop&rcm=ACoAADFG368BFeVJIpPKSrai_UiHr_xTBGS54Yw"
+hero_image: "/images/003-circuit-breakers-hero.jpeg"
 draft: false
 signoff: "What strategies are you using to handle third-party services?"
 ---
-
 
 Our service was choking. We thought circuit breakers would save us.
 
 Turns out, that's only half the story. 😅
 
 We called a third-party Service B from our main flow. Service B was unreliable — down often, and when it wasn't down, responses were taking **30+ seconds**.
-
-![The problem: Service B taking 30+ seconds, choking Service A under load](/images/circuit-breaker-problem.png)
-
-We added a strict **500ms timeout** first — if Service B didn't respond in time, we cancelled the request. Failures dropped, but not enough.
 
 ## The pattern people know
 
@@ -30,7 +25,9 @@ Clean. Elegant. Widely taught.
 
 Here's what's missing: **the circuit breaker can only open after failures accumulate**. If calls are timing out slowly — hanging for 30 seconds each — you accumulate 60 seconds of blocked threads before the circuit trips. By then, your connection pool is exhausted.
 
-![Circuit breaker states: Closed → Open → Half-Open, with 25% traffic ramp-up](/images/circuit-breaker-states.png)
+We added a strict **500ms timeout** first — if Service B didn't respond in time, we cancelled the request. Failures dropped, but not enough.
+
+![Circuit breaker states: Closed → Open → Half-Open, with 25% traffic ramp-up](/images/003-circuit-breakers-2.jpeg)
 
 ## The three states
 
@@ -65,6 +62,8 @@ Request → [Timeout: 500ms] → [Circuit Breaker] → Service B
                                     ↓
                          [Ramp-up on recovery: 25→50→75→100%]
 ```
+
+![Smart traffic ramp-up: 25% testing → 50% gradual → 75% confidence → 100% fully closed, failure logs down 40%](/images/003-circuit-breakers-3.png)
 
 <Aside>
 Most teams implement layer 2 and skip layers 1 and 3. Layer 1 is the most impactful per line of code.

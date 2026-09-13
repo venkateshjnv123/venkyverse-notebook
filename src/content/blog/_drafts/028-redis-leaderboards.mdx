@@ -1,0 +1,136 @@
+---
+id: "028"
+title: "How Online Games Update Leaderboards in Real Time"
+tagline: "I built one for our office fitness challenge. Redis Sorted Sets made it surprisingly simple."
+tags: ['system-design']
+date: 2026-01-15
+readTime: 3
+linkedin_url: ""
+hero_image: ""
+draft: true
+signoff: "What other real-world use cases of Redis Sorted Sets have you seen or built?"
+---
+
+
+"How do online games update leaderboards so fast?"
+
+A friend got this in an interview. I couldn't stop thinking about it all weekend.
+
+The naive answer: store scores in a DB table, `SELECT ... ORDER BY score DESC LIMIT 100`. Simple. Fine at small scale.
+
+At 10M players with scores updating every second? That `ORDER BY` is a full sort on every read. The table becomes a bottleneck. Queries kill your DB under load.
+
+The real answer: Redis Sorted Sets (ZSETs).
+
+## How Redis Sorted Sets work
+
+A sorted set stores members with a numeric score. Redis keeps members **sorted by score at all times** — not at query time.
+
+```
+ZADD leaderboard 8500 "player:alice"
+ZADD leaderboard 9200 "player:bob"
+ZADD leaderboard 7800 "player:carol"
+```
+
+The sorted set maintains order automatically. When bob's score updates, his position updates atomically.
+
+```
+# Top 3 (highest first)
+ZREVRANGE leaderboard 0 2 WITHSCORES
+→ bob(9200), alice(8500), carol(7800)
+
+# Alice's rank (0-indexed from top)
+ZREVRANK leaderboard "player:alice"
+→ 1
+
+# Players around alice
+ZREVRANGE leaderboard 0 2
+→ indices 0-2 around alice's rank
+```
+
+`ZADD` is O(log N). `ZRANGE`/`ZREVRANGE` is O(log N + K). No full-table scan. No sorting at read time.
+
+<Mermaid code="flowchart LR\n    W[Score update] -->|ZADD| Z[(Redis ZSET)]\n    R1[Top 10] -->|ZREVRANGE 0 9| Z\n    R2[My rank] -->|ZREVRANK member| Z\n    R3[Nearby players] -->|ZREVRANGE rank-3 rank+3| Z\n    style Z fill:#0F4C3A,color:#F7F5EE" />
+
+## What I built: office fitness leaderboard
+
+At Cars24, we ran a 60-day fitness challenge — daily exercises like pushups in 60 seconds, squats, planks. I thought a real-time leaderboard would motivate people more than a weekly spreadsheet update.
+
+So I built one.
+
+```java
+@Service
+public class LeaderboardService {
+    private static final String DAILY_PREFIX = "leaderboard:daily:";
+    private static final String OVERALL_KEY = "leaderboard:overall";
+
+    public void submitScore(String userId, int score, LocalDate date) {
+        String dailyKey = DAILY_PREFIX + date;
+
+        // ZADD updates score if member already exists (no duplicates)
+        redis.opsForZSet().add(dailyKey, userId, score);
+
+        // Add to running total for overall ranking
+        redis.opsForZSet().incrementScore(OVERALL_KEY, userId, score);
+
+        // Clean up daily boards after 90 days
+        redis.expire(dailyKey, Duration.ofDays(90));
+    }
+
+    public List<LeaderboardEntry> getTopN(int n, LocalDate date) {
+        String key = DAILY_PREFIX + date;
+        Set<ZSetOperations.TypedTuple<String>> top = redis.opsForZSet()
+            .reverseRangeWithScores(key, 0, n - 1);
+
+        return top.stream()
+            .map(t -> new LeaderboardEntry(t.getValue(), t.getScore().intValue()))
+            .collect(Collectors.toList());
+    }
+
+    public long getUserRank(String userId, LocalDate date) {
+        String key = DAILY_PREFIX + date;
+        Long rank = redis.opsForZSet().reverseRank(key, userId);
+        return rank != null ? rank + 1 : -1; // 1-indexed for display
+    }
+
+    public List<LeaderboardEntry> getNearby(String userId, LocalDate date, int window) {
+        String key = DAILY_PREFIX + date;
+        Long rank = redis.opsForZSet().reverseRank(key, userId);
+        if (rank == null) return List.of();
+
+        long start = Math.max(0, rank - window);
+        long end = rank + window;
+        return redis.opsForZSet().reverseRangeWithScores(key, start, end).stream()
+            .map(t -> new LeaderboardEntry(t.getValue(), t.getScore().intValue()))
+            .collect(Collectors.toList());
+    }
+}
+```
+
+No complex SQL. No aggregation jobs. No caching layers on top of a slow query. Just three Redis commands: `ZADD`, `ZREVRANGE`, `ZREVRANK`.
+
+## What I added beyond the basics
+
+**Personal score history** — each user's daily score stored in a separate hash for trend graphs. Not needed for the leaderboard itself, but useful for personal progress tracking.
+
+**Admin controls** — invalidate specific scores, seed test data, reset a daily board during testing.
+
+**Score moderation** — cap scores at 2x the daily average before storing them. Friendly leaderboards have people gaming the numbers.
+
+```java
+private int sanitizeScore(int rawScore, LocalDate date) {
+    double avg = getAverageScore(date);
+    int cap = (int) (avg * 2.0);
+    return Math.min(rawScore, cap);
+}
+```
+
+## The insight
+
+The application code was almost trivial once I had the right data structure.
+
+Choosing Redis Sorted Sets solved the hard part: maintaining sorted order under concurrent updates, at scale, with sub-millisecond reads.
+
+This same pattern powers: LeetCode contest rankings, gaming leaderboards, trending music charts, trending Twitter topics. Anywhere ranks need to update instantly without scanning the full dataset.
+
+The DSA sorted set question is actually a real system design question in disguise.

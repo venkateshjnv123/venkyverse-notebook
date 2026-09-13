@@ -5,12 +5,13 @@ tagline: "AI writes the code. Architecture decisions are still on you."
 tags: ['prod-bug', 'ai', 'system-design']
 date: 2026-01-20
 readTime: 3
-linkedin_url: ""
-hero_image: ""
+linkedin_url: "https://www.linkedin.com/posts/venkatesh-patnala-927a521b0_systemdesign-softwareengineering-distributedsystems-activity-7448027027019890688-SBey?utm_source=share&utm_medium=member_desktop&rcm=ACoAADFG368BFeVJIpPKSrai_UiHr_xTBGS54Yw"
+hero_image: "/images/004-rabbitmq-queue-hero.png"
 draft: false
 signoff: "Have you had AI-generated architecture that looked right but was missing something critical?"
 ---
 
+![RabbitMQ shared queue vs separate queues per service](/images/004-rabbitmq-queue-hero.png)
 
 Half our production events were lost — because of one small mistake. 😅
 
@@ -23,8 +24,6 @@ Then production happened. Some events were processed. Some just... vanished. No 
 Both services were consuming from the **same queue**.
 
 In RabbitMQ, a single queue distributes messages between consumers — it doesn't duplicate them. So instead of both services getting all events, they were unknowingly **splitting the load**.
-
-![Wrong: two services sharing one queue. Right: each service with its own queue, same exchange.](/images/rabbitmq-shared-queue.png)
 
 Analytics was seeing ~50% of events. Real-time dashboards were seeing the other 50%. Neither failed. Both appeared healthy. Silent data loss.
 

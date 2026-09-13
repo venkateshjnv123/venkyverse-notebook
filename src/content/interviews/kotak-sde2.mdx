@@ -1,0 +1,96 @@
+---
+company: "Kotak Mahindra Bank"
+role: "SDE-2"
+tagline: "Two rounds, both solved, still a no. Writing it down while it's fresh."
+date: 2026-08-20
+verdict: "rejected"
+verdictNote: "Rejected after Round 2"
+mode: "Virtual"
+readTime: 5
+rounds:
+  - n: 1
+    name: "LLD + System Design"
+    topics:
+      - "low-level-design"
+      - "system-design"
+      - "databases"
+    questions:
+      - title: "Design Zomato (LLD)"
+      - title: "Reverse Integer"
+        url: "https://leetcode.com/problems/reverse-integer/description/"
+      - title: "Palindrome Number"
+        url: "https://leetcode.com/problems/palindrome-number/description/"
+      - title: "Master/slave DB design + two-phase commit"
+    outcome: "Cleared"
+  - n: 2
+    name: "DSA"
+    topics:
+      - "graphs"
+      - "binary-search"
+    questions:
+      - title: "Word Ladder"
+        url: "https://leetcode.com/problems/word-ladder/description/"
+      - title: "Heaters"
+        url: "https://leetcode.com/problems/heaters/description/"
+    outcome: "Solved both with explanation — rejected anyway"
+draft: false
+signoff: "Ever cleared every question in a round and still got the no? What did you change after?"
+---
+
+## Round 1 — LLD, DS, and a database argument
+
+The round opened with a **low-level design of Zomato**. Not the full platform — the
+interviewer scoped it to restaurant listing, menu, cart, and order placement. What they
+were watching for was entity modelling and where behaviour lives: does `Order` know how
+to price itself, or does a `PricingStrategy` own that? I walked through the classes,
+the interfaces I'd keep open for extension (payment modes, delivery partners), and the
+one place I'd allow a god-object smell for pragmatism.
+
+Two warm-up DS questions followed, both classic:
+
+- **Reverse Integer** — the whole question is the overflow check, not the reversal. I
+  handled the 32-bit bound *before* the multiply, not after.
+- **Palindrome Number** — solved without converting to a string, by reversing only half
+  the digits and comparing.
+
+Then the design half turned into the interesting part: **master/slave (primary/replica)
+database design**. Replication lag, read-your-own-writes, why you route the write and
+the immediately-following read to the primary, and what failover actually costs you.
+
+That led into **two-phase commit** — the coordinator, the prepare phase, the commit
+phase, and the honest answer about why 2PC is rarely what you want in practice: the
+coordinator is a single point of failure and participants sit blocked holding locks
+while it's down. I said I'd reach for a saga with compensating transactions before I'd
+reach for 2PC.
+
+## Round 2 — DSA
+
+Two questions, both solved, both explained.
+
+**Word Ladder.** BFS over the implicit graph where each word is a node and an edge
+exists between words one character apart. The trick worth saying out loud is not the BFS
+— it's how you generate neighbours. Don't compare every word against every other word
+(`O(n² · L)`); instead build wildcard buckets like `h*t` → `[hot, hat, hit]` and look up
+in `O(L · 26)`. I also mentioned bidirectional BFS as the optimisation if the word list
+gets large.
+
+**Heaters.** For each house, find the nearest heater and take the max of those distances
+— that's your radius. Sort the heaters, then binary search each house's position to find
+the two candidate heaters around it and take the closer one. `O((n + m) log m)`. I
+walked through the edge cases: houses before the first heater and after the last one.
+
+Both correct. Both explained with complexity. Rejected after this round.
+
+## What I actually take from it
+
+No feedback was given, so anything I say here is a guess — but two guesses feel honest:
+
+1. **Correct isn't the bar at SDE-2.** Getting to the optimal solution is table stakes.
+   The signal above it is how fast you get there, and how much of the reasoning happens
+   out loud before the code rather than after it.
+2. **The 2PC answer may have read as opinionated.** I argued against 2PC and for sagas.
+   I still think that's right, but I pitched it as a conclusion instead of a trade-off,
+   and in an interview the trade-off *is* the answer.
+
+Writing this down mostly so future-me doesn't over-index on the rejection. The rounds
+were fine. The gap was in delivery, not in the DSA.

@@ -1,0 +1,58 @@
+---
+id: "'011'"
+title: "Redis Keys vs Scan — Which to Use?"
+tagline: "One command froze production for 2 seconds."
+tags: ['prod-bug', 'system-design']
+date: 2026-05-25
+readTime: 2
+linkedin_url: "https://www.linkedin.com/posts/venkatesh-patnala-927a521b0_java-springboot-backenddevelopment-activity-7460569617200058368-l_kb?utm_source=share&utm_medium=member_desktop&rcm=ACoAADFG368BFeVJIpPKSrai_UiHr_xTBGS54Yw"
+hero_image: "/images/011-redis-keys-trap-hero.png"
+draft: false
+signoff: "What's your Redis 'aha' moment?"
+---
+
+![redis.keys() vs redis.scan() — blocking vs non-blocking](/images/011-redis-keys-trap-hero.png)
+
+We use Redis to make our service faster...
+
+But Redis *increased* our API latency. 💀
+
+The culprit? `redis.keys("user:*")` — running at runtime to find keys.
+
+Looked fine. Worked totally fine in local.
+
+But in production...
+
+👉 Redis is single-threaded
+👉 `KEYS` blocks the entire server while searching
+👉 Every request — reads, writes, everything — just waits
+
+At small scale? Milliseconds. Nobody notices.
+At production scale? **2 second freeze. Every. Single. Call.** ⏳
+
+Our API latency spiked.
+No DB issue. No slow query. Infra looked clean.
+It took eternity to suspect Redis.
+
+## The fix was simple — SCAN instead of KEYS
+
+`SCAN` iterates using a cursor:
+→ small batches
+→ non-blocking
+→ other Redis operations continue normally
+
+```redis
+-- ❌ Blocks everything
+KEYS user:*
+
+-- ✅ Iterates in small batches, non-blocking
+SCAN 0 MATCH user:* COUNT 100
+```
+
+Not instant. Takes multiple round trips.
+But Redis stays unblocked the whole time.
+
+One command change. Latency back to normal.
+
+Redis is incredibly fast...
+until it freezes your production 😄

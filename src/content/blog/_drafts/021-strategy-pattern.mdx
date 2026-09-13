@@ -1,0 +1,157 @@
+---
+id: "021"
+title: "10 Payment Providers. 1 Giant If/Else Chain."
+tagline: "Every new provider shouldn't risk breaking the existing ones."
+tags: ['patterns', 'system-design']
+date: 2026-06-08
+readTime: 3
+linkedin_url: ""
+hero_image: ""
+draft: true
+signoff: "What are other use cases of the Strategy pattern you've hit in prod?"
+---
+
+
+We started simple. Razorpay → validate → process → done.
+
+Then came Stripe. `else if`. Then PayU. `else if`. Then PhonePe, HDFC, Juspay...
+
+Before I realized it, we had a 10-branch `if/else` chain inside one payment method. Every provider had different input formats, different validation rules, different processing logic — all crammed into one class.
+
+```java
+// This is what it looked like
+public PaymentResult process(PaymentRequest request) {
+    if (request.getProvider() == RAZORPAY) {
+        validateRazorpaySignature(request);
+        return processRazorpay(request);
+    } else if (request.getProvider() == STRIPE) {
+        validateStripePaymentIntent(request);
+        return processStripe(request);
+    } else if (request.getProvider() == PAYU) {
+        validatePayUHash(request);
+        return processPayU(request);
+    }
+    // ... 7 more providers
+    throw new UnsupportedProviderException(request.getProvider());
+}
+```
+
+Adding a new provider meant opening this method. Every time. Adding Stripe shouldn't require touching Razorpay — but it did.
+
+## Strategy Pattern
+
+The insight: every provider follows the same *shape*. Validate → Process → Execute → Done. The implementations differ; the contract doesn't.
+
+Define a common interface:
+
+```java
+public interface PaymentStrategy {
+    void validate(PaymentRequest request);
+    PaymentResult process(PaymentRequest request);
+    PaymentProvider getProvider();
+}
+```
+
+Each provider gets its own implementation:
+
+```java
+@Service
+public class RazorpayStrategy implements PaymentStrategy {
+    @Override
+    public void validate(PaymentRequest request) {
+        // Razorpay-specific signature validation
+        String expectedSig = hmacSHA256(request.getOrderId(), razorpaySecret);
+        if (!expectedSig.equals(request.getSignature())) {
+            throw new InvalidSignatureException("Razorpay signature mismatch");
+        }
+    }
+
+    @Override
+    public PaymentResult process(PaymentRequest request) {
+        // Razorpay-specific processing — touches zero Stripe code
+        return razorpayClient.capturePayment(request.getPaymentId(), request.getAmount());
+    }
+
+    @Override
+    public PaymentProvider getProvider() { return PaymentProvider.RAZORPAY; }
+}
+
+// Stripe handler — fully isolated from Razorpay
+@Service
+public class StripeStrategy implements PaymentStrategy {
+    @Override
+    public void validate(PaymentRequest request) {
+        stripeClient.retrievePaymentIntent(request.getPaymentIntentId()); // Stripe's way
+    }
+
+    @Override
+    public PaymentResult process(PaymentRequest request) {
+        return stripeClient.confirmPayment(request.getPaymentIntentId());
+    }
+
+    @Override
+    public PaymentProvider getProvider() { return PaymentProvider.STRIPE; }
+}
+```
+
+The orchestrator just picks the right handler at runtime:
+
+```java
+@Service
+public class PaymentService {
+    private final Map<PaymentProvider, PaymentStrategy> strategies;
+
+    @Autowired
+    public PaymentService(List<PaymentStrategy> strategyList) {
+        // Spring auto-injects all PaymentStrategy beans
+        this.strategies = strategyList.stream()
+            .collect(Collectors.toMap(PaymentStrategy::getProvider, s -> s));
+    }
+
+    public PaymentResult process(PaymentRequest request) {
+        PaymentStrategy strategy = strategies.get(request.getProvider());
+        if (strategy == null) throw new UnsupportedProviderException(request.getProvider());
+
+        strategy.validate(request);
+        return strategy.process(request);
+    }
+}
+```
+
+<Mermaid code="flowchart TD\n    R[PaymentRequest] --> S[PaymentService]\n    S -->|lookup by provider| D{Provider?}\n    D -->|RAZORPAY| A[RazorpayStrategy]\n    D -->|STRIPE| B[StripeStrategy]\n    D -->|PAYU| C[PayUStrategy]\n    A --> Result[PaymentResult]\n    B --> Result\n    C --> Result\n    style S fill:#0F4C3A,color:#F7F5EE\n    style D fill:#E6EFEA,color:#1A1A17" />
+
+## Adding a new provider
+
+Before: open the giant `if/else`, add another branch, hope you don't break the existing ones.
+
+After:
+
+1. Create `PhonePeStrategy implements PaymentStrategy`
+2. Spring auto-registers it in the map
+3. Done — Razorpay, Stripe, PayU: untouched
+
+```java
+@Service
+public class PhonePeStrategy implements PaymentStrategy {
+    @Override
+    public void validate(PaymentRequest request) { /* PhonePe validation */ }
+
+    @Override
+    public PaymentResult process(PaymentRequest request) { /* PhonePe processing */ }
+
+    @Override
+    public PaymentProvider getProvider() { return PaymentProvider.PHONEPAY; }
+}
+```
+
+No other file changes. No regression risk on existing providers.
+
+## Open/Closed Principle in action
+
+**Open for extension** — adding a new provider requires creating a new class.
+
+**Closed for modification** — adding a new provider requires touching zero existing classes.
+
+That's it. That's the whole idea.
+
+Took me a few years to stop writing that `if/else` pile. Took about 10 minutes to refactor it out.

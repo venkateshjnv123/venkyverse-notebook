@@ -1,0 +1,88 @@
+---
+id: "022"
+title: "One Migration Version Number Crashed Our Pods in a Loop"
+tagline: "Flyway doesn't care about when you merged. Only about the version number."
+tags: ['prod-bug', 'system-design']
+date: 2026-06-11
+readTime: 3
+linkedin_url: ""
+hero_image: ""
+draft: true
+signoff: "Ever broken production with a migration version conflict?"
+---
+
+
+We merged a single DB migration. Production turned into an infinite crash loop.
+
+No bad SQL. No broken schema. Just one migration version number in the wrong order.
+
+## What happened
+
+Two migrations were in flight at the same time — V82 and V83. V83 got merged first. Flyway ran it. Everything fine.
+
+Then V82 showed up.
+
+<Mermaid code="sequenceDiagram\n    participant H as Flyway History\n    participant Pod as Pod Startup\n    H->>H: V83 already applied\n    Pod->>H: wants to run V82\n    H-->>Pod: V82 is older than V83 — validation failed\n    Pod->>Pod: App context never loads\n    Pod->>Pod: Crashes\n    Pod->>Pod: Restarts\n    Pod->>Pod: Crashes again" />
+
+On every pod startup, Flyway checks the migration history. It saw V83 was already applied and V82 was trying to run *after* it. Validation failed. The app context never loaded. Pod crashed → restarted → crashed again.
+
+There was nothing in the logs that screamed "error." It was buried in the startup output, labelled as a startup failure with no obvious migration-related message.
+
+## Why Flyway is strict about this
+
+Flyway applies migrations in version order. The version number is a contract: *"nothing older will show up later."*
+
+Once V83 is applied, Flyway's invariant is: every migration with a number less than 83 has already run. If V82 shows up now, that invariant is broken. Flyway refuses to proceed rather than risk a schema inconsistency.
+
+This isn't a Flyway bug. It's a safety net. Out-of-order migrations can cause silent data corruption that's nearly impossible to debug after the fact.
+
+## The immediate fix
+
+We renamed `V82__add_column.sql` → `V84__add_column.sql`.
+
+Higher than V83 → Flyway treats it as the next migration → validation passes → pod comes up.
+
+```
+V82__add_column.sql    ← rename this
+V83__add_index.sql     ← already applied
+V84__add_column.sql    ← new name: higher than 83, Flyway happy
+```
+
+The rename is safe because Flyway tracks by version number, not by filename. As long as the SQL is idempotent (or your column truly doesn't exist yet), this works cleanly.
+
+## Preventing it going forward
+
+The root cause wasn't the SQL — it was **merge order not matching version order**.
+
+**Option 1: Communicate before numbering**
+
+Before creating V82, check if anyone else has a migration in flight. One Slack message avoids the collision entirely.
+
+**Option 2: Use timestamps instead of integers**
+
+```sql
+-- Instead of V82__add_column.sql
+V20260611143022__add_column.sql  -- timestamp format: YYYYMMDDHHmmss
+```
+
+Flyway supports timestamp-based versioning. Collisions become nearly impossible unless two migrations are created at the exact same second.
+
+**Option 3: Separate migration PRs from feature PRs**
+
+Never bundle a DB migration with the feature that uses it in the same PR. Merge migrations first, let them apply across all environments, then merge the feature code. This also forces you to write backward-compatible migrations.
+
+**Option 4: Check `flyway:info` in staging before merging**
+
+```bash
+./mvnw flyway:info -Dflyway.url=... -Dflyway.user=... -Dflyway.password=...
+```
+
+Shows current migration state. If something looks out of order in staging, it will definitely crash in prod.
+
+## The real lesson
+
+`outOfOrder=true` is the default in most local dev setups. Flyway is lenient when you're running alone on a single schema.
+
+Production has `outOfOrder=false`. As it should.
+
+The moment you have multiple developers running parallel feature branches with DB migrations, version ordering becomes a coordination problem — not a technical one.

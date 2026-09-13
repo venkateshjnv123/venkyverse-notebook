@@ -23,11 +23,6 @@ function isActive(href: string): boolean {
 
     <span class="masthead__divider" aria-hidden="true"></span>
 
-    <div class="masthead__caption">
-      <span class="masthead__caption-line">FIELD NOTES · VOL. VI</span>
-      <span class="masthead__caption-line masthead__caption-line--sub">KEPT HONEST BY PRODUCTION</span>
-    </div>
-
     <nav class="masthead__nav" aria-label="primary">
       <ul class="navpill">
         <li><a href="/"        data-num="01" class={isActive('/')        ? 'is-active' : ''}>now</a></li>
@@ -38,10 +33,12 @@ function isActive(href: string): boolean {
       </ul>
     </nav>
 
+    {/* hidden per request — status badge read as noise
     <div class="masthead__status">
       <span class="status-dot dot--breathing"></span>
       <span class="status-text">open · SDE-2</span>
     </div>
+    */}
 
   </div>
   <div class="masthead__rule" aria-hidden="true"></div>

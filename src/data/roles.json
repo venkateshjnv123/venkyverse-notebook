@@ -4,12 +4,11 @@
       "id": "cars24",
       "current": true,
       "dateRange": "Apr 2025 — Present",
-      "title": "SDE-1",
+      "title": "Builder: Backend engineering",
       "company": "Cars24",
-      "location": "Bangalore",
+      "location": "Gurugram",
       "summary": "Designing payment orchestration microservices and C2C platform features. Java + Spring Boot + heavy event-driven architecture, with payment gateways and seller/buyer workflows that need to stay reliable at scale.",
       "details": {
-        "narrative": "At Cars24 I work primarily on two systems: a payment orchestration layer that routes transactions across Razorpay, Juspay, and Paytm, and a C2C platform that handles the seller/buyer side of vehicle marketplace flows. Both have non-trivial scale and reliability requirements — payments especially, where 'mostly works' isn't an option.",
         "shipped": [
           {
             "title": "Payment orchestration system",
@@ -38,7 +37,7 @@
       "dateRange": "Feb 2024 — Mar 2025",
       "title": "Software Engineer (Automation)",
       "company": "Sprinklr",
-      "location": "Bangalore",
+      "location": "Gurugram",
       "summary": "Worked on test automation for Sprinklr's Workforce Management module. Built a modern API automation framework that cut test-case creation time by 70% via dynamic JSON parsing. Optimized Jenkins jobs to drop sanity testing duration by 4 hours.",
       "stack": ["Java", "Selenium", "GraphQL", "REST", "Jenkins"],
       "lesson": "Building test infrastructure is engineering, not 'just QA'. Bad tests kill velocity faster than bad code."
@@ -47,7 +46,7 @@
       "id": "cogoport",
       "current": false,
       "dateRange": "Aug 2023 — Dec 2023",
-      "title": "SDE-1",
+      "title": "Builder: Backend engineering",
       "company": "Cogoport",
       "location": "Gurgaon",
       "summary": "My first full-time engineering role. Led development of 5 HRMS modules (payroll, onboarding, expense management, etc.) with a small team. Cost savings of $50k/year for the company. Built tools used by 900+ employees.",

@@ -1,0 +1,152 @@
+---
+id: "025"
+title: "My First System Design Interview"
+tagline: "I jumped straight to microservices before I understood the problem."
+tags: ['system-design']
+date: 2026-02-15
+readTime: 4
+linkedin_url: ""
+hero_image: ""
+draft: true
+signoff: "What's the trickiest system design question you've been asked?"
+---
+
+
+Interviewer: "Design a URL shortener."
+
+Me (0-1 YOE, overconfident): "Let's use microservices..."
+
+Interviewer: Okay.
+
+Me (already drawing boxes): "Redis for cache, Kafka for events—"
+
+Interviewer: "Before that... what are the requirements?"
+
+Silence. Brain.exe stopped working.
+
+That was two years ago. The lesson stuck.
+
+## What I should have done first
+
+Not draw boxes. Ask questions.
+
+- How many users? 10 or 10 million?
+- Read-heavy or write-heavy?
+- Does the short URL need to be permanent?
+- Any analytics on clicks?
+- Custom slugs?
+- Global or regional?
+
+Speed doesn't matter if you're solving the wrong problem.
+
+## The 4-step framework that actually works
+
+<Mermaid code="flowchart LR\n    A[1 Understand] --> B[2 HLD]\n    B --> C[3 Deep Dive]\n    C --> D[4 Wrap Up]\n    style A fill:#0F4C3A,color:#F7F5EE\n    style B fill:#0F4C3A,color:#F7F5EE\n    style C fill:#0F4C3A,color:#F7F5EE\n    style D fill:#0F4C3A,color:#F7F5EE" />
+
+### Step 1: Understand the problem
+
+Ask questions. Clarify constraints. Think in numbers.
+
+For a URL shortener:
+- 100M URLs created per day → ~1,200 writes/sec
+- 10:1 read:write ratio → ~12,000 reads/sec
+- 5 years retention → ~180B URLs → ~36TB storage (at ~200 bytes per record)
+
+Talk through your estimates out loud. Interviewers care more about *how* you think than *what* you know. Arriving at a rough number with clear reasoning beats a precise number with no explanation.
+
+### Step 2: High-Level Design
+
+Start with the big picture. Data flows first, components second.
+
+```
+URL Shortener — HLD
+
+Client
+  └── API Layer
+        ├── POST /shorten  → write path
+        └── GET /{code}    → read path → redirect
+
+Write path: generate code → DB write → cache warm
+Read path:  Redis check → DB fallback → 301 redirect
+
+Storage:
+  DB: key-value  (code → longURL + metadata)
+  Cache: Redis   (hot URLs, TTL-based)
+```
+
+Don't jump to specific tech yet. Draw the data flow first. Components fall out naturally once you understand what data moves where.
+
+### Step 3: Deep dive
+
+Go deep on the most interesting or risky parts.
+
+**Key generation:**
+
+Option A — Random 6-char base62: `[A-Za-z0-9]^6` = ~56 billion combinations. Simple. But needs a uniqueness check on every write.
+
+Option B — Key Generation Service (KGS): pre-generates keys in batches, marks used ones. API servers grab a batch on startup. No DB round-trip on every write. Scales better under high write load.
+
+```java
+// KGS approach — each API server holds a buffer of pre-allocated keys
+@Service
+public class KeyService {
+    private final Queue<String> keyBuffer = new ConcurrentLinkedQueue<>();
+    private static final int BUFFER_SIZE = 1000;
+
+    public String nextKey() {
+        if (keyBuffer.isEmpty()) refillBuffer();
+        return keyBuffer.poll();
+    }
+
+    private synchronized void refillBuffer() {
+        List<String> keys = kgsDb.allocateKeys(BUFFER_SIZE);
+        keyBuffer.addAll(keys);
+    }
+}
+```
+
+**Handling read scale:**
+
+Reads are 10x more frequent than writes. Cache aggressively.
+
+```java
+public String resolve(String code) {
+    // L1: Redis (microseconds)
+    String url = redis.get("url:" + code);
+    if (url != null) return url;
+
+    // L2: DB (milliseconds)
+    url = db.findByCode(code);
+    if (url == null) throw new NotFoundException(code);
+
+    // Warm cache for next time
+    redis.setex("url:" + code, 3600, url);
+    return url;
+}
+```
+
+**Where it breaks:**
+
+- Hot URLs: thousands of requests for the same key → cache stampede (→ SETNX mutex)
+- KGS single point of failure → replicate KGS, each replica owns separate key ranges
+- DB bottleneck at scale → shard by `hash(code) % N`
+
+### Step 4: Wrap up
+
+Quick recap. Scaling challenges. Failure modes. Monitoring.
+
+- Metrics to alert on: redirect P99 latency, cache hit rate, write error rate
+- What fails first under load: write path if DB isn't sharded; cache if TTL is too short
+- Recovery: pre-warm cache on startup from recent access logs
+
+Strong endings leave strong impressions.
+
+## The real lesson
+
+This framework isn't just for interviews.
+
+Before building anything non-trivial at work: what are the requirements? What scale? What breaks first?
+
+Asking those questions before drawing boxes has saved me more time than any framework.
+
+I was that guy who answered before the question finished. Don't be that guy.

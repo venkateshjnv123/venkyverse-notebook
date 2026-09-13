@@ -5,11 +5,13 @@ tagline: "Webhook order is unpredictable. Version numbers aren't."
 tags: ['prod-bug', 'system-design']
 date: 2026-05-25
 readTime: 2
-linkedin_url: ""
-hero_image: ""
+linkedin_url: "https://www.linkedin.com/posts/venkatesh-patnala-927a521b0_backend-distributedsystems-concurrency-activity-7450904127821471745-NFQ3?utm_source=share&utm_medium=member_desktop&rcm=ACoAADFG368BFeVJIpPKSrai_UiHr_xTBGS54Yw"
+hero_image: "/images/017-webhook-out-of-order-hero.png"
 draft: false
 signoff: "How did you handle out-of-order webhooks in your system?"
 ---
+
+![Race condition vs versioned updates — out-of-order webhook handling](/images/017-webhook-out-of-order-hero.png)
 
 We had a weird bug in prod. User reuploaded a car image… but still saw the old one. 👻
 
@@ -26,8 +28,6 @@ Then this happened:
 - Image A finishes late 💀 — overwrites Image B
 
 Classic race condition.
-
-![Race condition vs versioned updates — out-of-order webhook handling](/images/webhook-race-condition-versioning.png)
 
 **The root cause:** webhook delivery timing is completely unpredictable. Sometimes seconds. Sometimes minutes. Order of uploads ≠ order of webhook arrival.
 

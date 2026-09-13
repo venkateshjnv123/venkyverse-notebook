@@ -1,0 +1,107 @@
+---
+id: "027"
+title: "How Does RedBus Block a Seat Without Double Booking?"
+tagline: "Multiple platforms. One seat. One source of truth."
+tags: ['system-design']
+date: 2026-01-20
+readTime: 4
+linkedin_url: ""
+hero_image: ""
+draft: true
+signoff: "How would you handle distributed seat locking at even larger scale?"
+---
+
+
+While booking a bus ticket on RedBus, I started wondering: the same seat is visible on RedBus, AbhiBus, ZingBus, and BookMyShow simultaneously. How does clicking "Book" on one platform lock it on all the others instantly?
+
+My first instinct: "Block it in Redis with a TTL, easy."
+
+But that breaks immediately at scale.
+
+## Why naive per-platform blocking fails
+
+If RedBus maintains its own Redis and blocks a seat there, AbhiBus has no idea. The seat still shows available on AbhiBus. Two people book the same seat from different platforms. Double booking. Chaos.
+
+Each platform blocking independently = race conditions across platforms.
+
+## The real architecture: one source of truth
+
+The bus **operator** owns the seat inventory. Not RedBus. Not AbhiBus.
+
+A **Central Seat Lock Service** sits between all platforms and the operator's inventory. When you click "Book" on any platform, the lock request goes through this central service.
+
+<Mermaid code="sequenceDiagram\n    participant U as User on RedBus\n    participant R as RedBus\n    participant L as Central Lock Service\n    participant A as AbhiBus\n    R->>L: Lock seat 12A for 10min\n    L-->>R: Lock acquired\n    R-->>U: Seat held — complete payment\n    A->>L: Is seat 12A available?\n    L-->>A: LOCKED — unavailable" />
+
+## How the atomic lock works
+
+The core operation: `SET key value NX EX 600` — Set if Not eXists, with 10-minute TTL. This is atomic in Redis. Even if 100 requests arrive at the same millisecond, only one wins.
+
+```java
+@Service
+public class SeatLockService {
+
+    public SeatLockResult lock(String busId, String seatId, String platformId, String userId) {
+        String lockKey = "seat:" + busId + ":" + seatId;
+        String lockValue = platformId + ":" + userId + ":" + System.currentTimeMillis();
+
+        // NX = only set if key doesn't exist (atomic)
+        // EX = expire after 600 seconds (10 minutes)
+        Boolean acquired = redis.opsForValue().setIfAbsent(lockKey, lockValue, Duration.ofMinutes(10));
+
+        if (Boolean.TRUE.equals(acquired)) {
+            return SeatLockResult.success(lockKey);
+        }
+
+        // Lock held by someone else — return who holds it
+        String currentHolder = redis.opsForValue().get(lockKey);
+        return SeatLockResult.locked(currentHolder);
+    }
+
+    public void release(String lockKey) {
+        redis.delete(lockKey);
+    }
+}
+```
+
+## Payment outcomes
+
+```java
+@Service
+public class BookingService {
+
+    public void onPaymentResult(String lockKey, String busId, String seatId, PaymentStatus status) {
+        if (status == PaymentStatus.SUCCESS) {
+            // Convert temporary lock to a permanent booking in operator DB
+            operatorDb.confirmBooking(busId, seatId, extractUserId(lockKey));
+            redis.delete(lockKey); // TTL-based lock no longer needed — booking is permanent
+        } else {
+            // Payment failed or timed out
+            redis.delete(lockKey); // release immediately so others can book
+        }
+    }
+}
+```
+
+| Event | Result |
+|---|---|
+| Lock acquired | Seat unavailable on all platforms for 10 min |
+| Payment success | Permanent booking in operator DB, lock released |
+| Payment failed | Lock released immediately, seat available again |
+| TTL expires (abandoned) | Auto-released, seat available again |
+
+## Why the TTL matters
+
+Without TTL, an abandoned payment (user closed the tab, lost connection) would hold the seat forever. No one else can book it. Revenue lost.
+
+With TTL, Redis automatically releases the lock after 10 minutes. The seat goes back to available. The timer shown in the UI ("complete payment in 9:47") is a countdown to that TTL expiry.
+
+## What about concurrent lock requests?
+
+The `NX` flag handles this atomically. Even at peak load during a Diwali flash sale with thousands of simultaneous bookings, Redis processes `SET NX` operations one at a time per key. Only one request gets `true`.
+
+This is the same pattern used in:
+- Concert ticketing (BookMyShow, Ticketmaster)
+- Hotel/flight booking
+- Inventory reservation in e-commerce
+
+One inventory. One lock service. No double bookings.

@@ -1,0 +1,102 @@
+---
+id: "019"
+title: "One Redis Key Expired. 100 Requests Hit Our DB."
+tagline: "Cache stampedes are invisible until they're not."
+tags: ['prod-bug', 'system-design']
+date: 2026-06-08
+readTime: 4
+linkedin_url: "https://www.linkedin.com/posts/venkatesh-patnala-927a521b0_a-single-redis-key-expired-suddenly-100s-activity-7467794367013888001-mMHt?utm_source=share&utm_medium=member_desktop&rcm=ACoAADFG368BFeVJIpPKSrai_UiHr_xTBGS54Yw"
+hero_image: "/images/019-cache-stampede-hero.png"
+draft: false
+signoff: "How do you handle cache stampedes in your system?"
+---
+
+![Cache stampede: one expired key = everyone hits DB at once](/images/019-cache-stampede-hero.png)
+
+A single Redis key expired. API latency jumped from 200ms → 2s.
+
+No deploy. No traffic surge. Nothing changed.
+
+Turns out a config key in Redis had expired. And then everything hit the database at once.
+
+## What is a cache stampede?
+
+<Mermaid code="flowchart TD\n    A[Redis key expires] --> B[Request 1 misses cache]\n    A --> C[Request 2 misses cache]\n    A --> D[Request 100 misses cache]\n    B --> E[DB query]\n    C --> E\n    D --> E\n    E --> F[DB overwhelmed — latency spikes]\n    style F fill:#C4583A,color:#F7F5EE\n    style A fill:#D69E2E,color:#1A1A17" />
+
+When a cached value expires, every in-flight request simultaneously falls through to the database. All of them fire the same query. All at once.
+
+At small traffic? Milliseconds of pain, nobody notices.
+
+At production scale? Hundreds of identical queries hit your DB in the same instant. Latency spikes. Everything slows down.
+
+This is a **cache stampede** — also called a thundering herd.
+
+## What happened in our case
+
+Our service cached a config object in Redis with a fixed TTL. When it expired:
+
+- Every incoming request missed the cache
+- All of them fell through to the DB
+- Every single one fired the same query
+- DB got hammered with hundreds of identical reads
+- The cache wasn't protecting the database anymore
+
+The config object took ~200ms to compute from DB. Multiply that by 100+ concurrent requests = chaos.
+
+## Fix 1: Mutex lock with SETNX
+
+Only let **one** request rebuild the cache. Everyone else waits for that result.
+
+```java
+public Config getConfig(String key) {
+    // Try cache first
+    String cached = redis.get(key);
+    if (cached != null) return deserialize(cached);
+
+    // Try to acquire rebuild lock
+    String lockKey = "lock:" + key;
+    boolean acquired = redis.set(lockKey, "1", SetArgs.Builder.nx().ex(10));
+
+    if (acquired) {
+        try {
+            Config config = db.fetchConfig(key);
+            redis.setex(key, 300, serialize(config));
+            return config;
+        } finally {
+            redis.del(lockKey);
+        }
+    } else {
+        // Another thread is rebuilding — wait briefly and retry
+        Thread.sleep(50);
+        return getConfig(key);
+    }
+}
+```
+
+`SET key value NX EX 10` is atomic. Even if 100 requests arrive simultaneously, only one wins the lock. The rest retry after 50ms and hit the freshly warmed cache.
+
+<Mermaid code="flowchart TD\n    A[Cache miss] --> B{SETNX lock?}\n    B -->|acquired| C[Fetch from DB]\n    C --> D[Write to Redis]\n    D --> E[Release lock]\n    B -->|not acquired| F[Wait 50ms]\n    F --> G[Retry — cache is warm now]\n    style C fill:#0F4C3A,color:#F7F5EE" />
+
+## Fix 2: TTL jitter
+
+If you cache multiple keys with the same TTL, they all expire simultaneously. One stampede per config key, all at once.
+
+Add randomness to the TTL:
+
+```java
+int baseTtl = 300; // 5 minutes
+int jitter = ThreadLocalRandom.current().nextInt(0, 60); // 0–60s random
+redis.setex(key, baseTtl + jitter, serialize(value));
+```
+
+Keys now expire at different times. No synchronized expiry. No synchronized stampede.
+
+## The mental model shift
+
+Most engineers think about **cache hits and misses**. The question is "is the data in cache?"
+
+But the real question under high traffic is: **what happens the moment it's not?**
+
+The cache wasn't the bottleneck. The cache *expiry* was.
+
+Distributed systems are fun... until every request misses the cache at once.

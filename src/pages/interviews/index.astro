@@ -1,0 +1,243 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+
+const entries = (await getCollection('interviews', ({ data }) => !data.draft))
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+
+const verdictLabel: Record<string, string> = {
+  offer: 'offer',
+  rejected: 'rejected',
+  withdrawn: 'withdrawn',
+  'in-progress': 'in progress',
+};
+
+function formatDate(date: Date) {
+  return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+}
+---
+<BaseLayout
+  title="Interview experiences · Venkatesh Patnala"
+  description="Round-by-round write-ups of the interviews I've sat — questions asked, what I answered, and how it ended. Rejections included."
+  activePage="life"
+>
+
+  <header class="iv-header">
+    <div class="header-inner">
+      <span class="kicker-line">~/LIFE/INTERVIEWS</span>
+      <h1 class="hero-h1">Rounds, questions, <em>verdicts.</em></h1>
+      <p class="hero-desc">
+        Every interview I've sat, written down round by round — the actual questions, what I
+        answered, and how it ended. The rejections are here too. They're the useful ones.
+      </p>
+    </div>
+  </header>
+
+  <section class="iv-list-section">
+    <div class="iv-list-inner">
+      {entries.length === 0 ? (
+        <p class="iv-empty">Nothing written up yet.</p>
+      ) : (
+        <div class="iv-list">
+          {entries.map(entry => (
+            <a href={`/interviews/${entry.id}`} class="iv-card">
+              <div class="iv-card__top">
+                <div>
+                  <h2 class="iv-card__company">{entry.data.company}</h2>
+                  <p class="iv-card__role">{entry.data.role} · {formatDate(entry.data.date)}</p>
+                </div>
+                <span class={`verdict-pill verdict--${entry.data.verdict}`}>
+                  {entry.data.verdictNote || verdictLabel[entry.data.verdict]}
+                </span>
+              </div>
+
+              <p class="iv-card__tagline">{entry.data.tagline}</p>
+
+              <div class="iv-card__rounds">
+                {entry.data.rounds.map(round => (
+                  <span class="round-chip">R{round.n} · {round.name}</span>
+                ))}
+              </div>
+
+              <span class="iv-card__arrow">read the write-up →</span>
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
+  </section>
+
+</BaseLayout>
+
+<style>
+.iv-header {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 3rem 2rem 2rem;
+}
+
+.header-inner {
+  border-bottom: 0.5px dashed #D9D5C7;
+  padding-bottom: 1.5rem;
+}
+
+.kicker-line {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: #C4583A;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 0.75rem;
+}
+
+.hero-h1 {
+  font-family: var(--font-serif);
+  font-size: 48px;
+  font-weight: 400;
+  line-height: 1.05;
+  letter-spacing: -0.025em;
+  color: #1A1A17;
+  margin-bottom: 1rem;
+}
+
+.hero-h1 em { font-style: italic; color: #0F4C3A; }
+
+.hero-desc {
+  font-family: var(--font-serif);
+  font-size: 17px;
+  line-height: 1.7;
+  color: #4A4A45;
+  max-width: 640px;
+}
+
+.iv-list-section {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 2.5rem 2rem 4rem;
+}
+
+.iv-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.iv-empty {
+  font-family: var(--font-serif);
+  font-style: italic;
+  color: #8A8A82;
+}
+
+.iv-card {
+  display: block;
+  padding: 1.5rem 1.75rem;
+  background: #FDFCF6;
+  border: 0.5px solid #D9D5C7;
+  border-radius: 12px;
+  text-decoration: none;
+  transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+}
+
+.iv-card:hover {
+  transform: translateY(-2px);
+  border-color: #0F4C3A;
+  box-shadow: 0 6px 18px rgba(15, 76, 58, 0.09);
+}
+
+.iv-card__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.iv-card__company {
+  font-family: var(--font-serif);
+  font-size: 24px;
+  font-weight: 400;
+  letter-spacing: -0.015em;
+  color: #1A1A17;
+  margin: 0 0 0.2rem;
+}
+
+.iv-card__role {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: #8A8A82;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.verdict-pill {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 5px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.verdict--offer {
+  background: rgba(15, 76, 58, 0.1);
+  color: #0F4C3A;
+  border: 0.5px solid rgba(15, 76, 58, 0.35);
+}
+
+.verdict--rejected {
+  background: rgba(196, 88, 58, 0.1);
+  color: #C4583A;
+  border: 0.5px solid rgba(196, 88, 58, 0.35);
+}
+
+.verdict--withdrawn,
+.verdict--in-progress {
+  background: rgba(214, 158, 46, 0.12);
+  color: #A17617;
+  border: 0.5px solid rgba(214, 158, 46, 0.4);
+}
+
+.iv-card__tagline {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 16px;
+  line-height: 1.5;
+  color: #4A4A45;
+  margin: 0 0 1rem;
+}
+
+.iv-card__rounds {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 1rem;
+}
+
+.round-chip {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: #4A4A45;
+  background: var(--paper-deep, #F0EDE3);
+  border: 0.5px solid #D9D5C7;
+  border-radius: 5px;
+  padding: 4px 8px;
+}
+
+.iv-card__arrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: #0F4C3A;
+  letter-spacing: 0.04em;
+}
+
+@media (max-width: 700px) {
+  .hero-h1 { font-size: 32px; }
+  .iv-card__top { flex-direction: column; }
+  .iv-card__company { font-size: 20px; }
+}
+</style>

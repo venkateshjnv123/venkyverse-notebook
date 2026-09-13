@@ -1,15 +1,17 @@
 ---
 id: "016"
-title: "Redis Locks Decide Who Starts, Not Who Finishes"
+title: "How Redis Betrayed Us With Locks"
 tagline: "Lock expired mid-job. Users got duplicate notifications."
 tags: ['prod-bug', 'system-design']
 date: 2026-05-25
 readTime: 2
-linkedin_url: ""
-hero_image: ""
+linkedin_url: "https://www.linkedin.com/posts/venkatesh-patnala-927a521b0_backend-distributedsystems-concurrency-activity-7452559350998560768-8H-I?utm_source=share&utm_medium=member_desktop&rcm=ACoAADFG368BFeVJIpPKSrai_UiHr_xTBGS54Yw"
+hero_image: "/images/016-redis-lock-idempotency-hero.png"
 draft: false
 signoff: "How do you handle long-running jobs with distributed locks?"
 ---
+
+![Without idempotency: duplicate notifications. With idempotency: stale execution skipped.](/images/016-redis-lock-idempotency-hero.png)
 
 We used Redis locks to prevent duplicate cron jobs.
 
@@ -24,8 +26,6 @@ Then this happened in production:
 - Another instance acquired the lock
 - Same job started again on a different server
 - Both instances were now sending notifications simultaneously 💥
-
-![Without idempotency: duplicate notifications. With idempotency: stale execution skipped.](/images/redis-lock-idempotency.png)
 
 **Redis locks decide who *starts*. Not who *finishes*.**
 

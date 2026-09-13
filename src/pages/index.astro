@@ -1,8 +1,9 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import NodeGraph from '../components/NodeGraph.astro';
 import IllustrationFrame from '../components/IllustrationFrame.astro';
+// import BookIntro from '../components/BookIntro.astro'; // opening animation paused
 import { getCollection } from 'astro:content';
-import currently from '../data/currently.json';
 
 const posts = (await getCollection('blog', ({ data }) => !data.draft))
   .sort((a, b) => a.data.id.localeCompare(b.data.id));
@@ -13,27 +14,34 @@ function formatDate(date: Date) {
 ---
 <BaseLayout>
 
+  {/* ── SECTION 0: OPENING ANIMATION — paused for now ──────
+  <BookIntro />
+  */}
+
   <!-- ── SECTION 3: HERO ─────────────────────────────────── -->
   <section class="hero">
     <div class="hero-grid">
       <div class="hero-left">
         <h1 class="hero-h1">
-          I build backend systems that<br>
-          <em>don't flinch at scale.</em>
+          Building backend systems <span class="hero-aside">(of course with AI)</span><br>
+          that <em>(don't) break at scale.</em>
         </h1>
         <p class="hero-sub">
-          I'm Venkatesh — a backend engineer thinking in systems, shipping alongside AI,
-          and writing down what I learn along the way. Currently at
-          <span class="inline-note">Cars24 · SDE-1, building toward SDE-2</span>.
+          I'm Venkatesh Patnala — a backend engineer always thinking in tradeoffs, shipping alongside
+          AI, and writing down what I learn along the way. Currently at Cars24.
         </p>
+        {/* hidden per request — CTAs paused
         <div class="hero-ctas">
           <a href="#currently" class="btn-primary">see what I'm building →</a>
           <a href="#about" class="btn-ghost">or read the long version</a>
         </div>
+        */}
+        {/* hidden per request — "in the lab" feature not needed
         <a href="#currently" class="scroll-hint">
           <span>in the lab</span>
           <span class="arrow">↓</span>
         </a>
+        */}
       </div>
       <div class="hero-right">
         <IllustrationFrame />
@@ -55,24 +63,10 @@ function formatDate(date: Date) {
     </div>
   </section>
 
-  <!-- ── SECTION 4: CURRENTLY ───────────────────────────── -->
-  <section class="currently" id="currently">
-    <div class="currently-inner">
-      <div class="currently__stack">
-        <div class="currently__sheet currently__sheet--3" aria-hidden="true"></div>
-        <div class="currently__sheet currently__sheet--2" aria-hidden="true"></div>
-        <article class="currently__sheet currently__sheet--1">
-          <header class="currently__head">
-            <span class="currently__label">currently</span>
-            <span class="currently__date">{currently.since}</span>
-          </header>
-          <h2 class="currently__title">
-            {currently.kind} <em>{currently.title}</em>
-          </h2>
-          <p class="currently__subtitle">{currently.subtitle}</p>
-          <a href="/journey" class="currently__link">what I'm shipping →</a>
-        </article>
-      </div>
+  <!-- ── SECTION 4: ARCHITECTURE GRAPH ──────────────────── -->
+  <section class="graph-frame">
+    <div class="graph-inner">
+      <NodeGraph />
     </div>
   </section>
 
@@ -80,7 +74,7 @@ function formatDate(date: Date) {
   <section class="path-section" id="path">
     <div class="path-inner">
       <span class="kicker">THE PATH SO FAR</span>
-      <h2 class="section-h2">From IIT Jodhpur to engineering <em>at scale.</em></h2>
+      <h2 class="section-h2">From IIT Jodhpur to <em>Engineering.</em></h2>
 
       <div class="timeline">
         <div class="timeline-node">
@@ -103,7 +97,7 @@ function formatDate(date: Date) {
           <div class="dot dot-active"></div>
           <div class="node-text">
             <div class="node-year">Apr 2025 — now</div>
-            <div class="node-role">SDE-1</div>
+            <div class="node-role">Builder: Backend engineering</div>
             <div class="node-where">Cars24 · payment &amp; C2C systems</div>
           </div>
         </div>
@@ -123,17 +117,10 @@ function formatDate(date: Date) {
   <section class="notebook-section">
     <div class="notebook-inner">
       <span class="kicker">MY NOTEBOOK</span>
-      <h2 class="section-h2">Stories, patterns, and what they <em>taught me.</em></h2>
+      <h2 class="section-h2">My backend stories and what they <em>taught me.</em></h2>
+      {/* hidden per request
       <p class="notebook-desc">Production bugs become patterns become lessons. Short version here. Full version on LinkedIn.</p>
-
-      <div class="filter-bar">
-        <span class="filter-label">FILTER BY</span>
-        <button class="chip chip-active" data-filter="all">all <span class="chip-count">(5)</span></button>
-        <button class="chip" data-filter="prod-bug">prod-bug <span class="chip-count">(2)</span></button>
-        <button class="chip" data-filter="system-design">system-design <span class="chip-count">(2)</span></button>
-        <button class="chip" data-filter="ai">ai <span class="chip-count">(2)</span></button>
-        <button class="chip" data-filter="career">career <span class="chip-count">(1)</span></button>
-      </div>
+      */}
 
       <div class="post-list">
         {posts.map((post) => (
@@ -174,7 +161,6 @@ function formatDate(date: Date) {
     <div class="twocol-inner twocol">
       <div class="about-col">
         <span class="kicker">ABOUT THE AUTHOR</span>
-        <h2 class="section-h2">The short version.</h2>
 
         <p class="about-p">
           I graduated from <strong>IIT Jodhpur in 2023</strong>, interned at Aspiro, shipped my first
@@ -182,9 +168,9 @@ function formatDate(date: Date) {
           at <span class="hl">Cars24</span>.
         </p>
         <p class="about-p">
-          Two questions drive most of what I do: <em>how do you design systems that scale gracefully
-          under chaos</em>, and <em>how do you pair with AI so it multiplies you instead of breaking
-          you</em>. Almost everything I write sits at that intersection.
+          Two questions I ask myself: <em>how do you design systems that break gracefully under
+          chaos</em>, and <em>how best can I use AI so it multiplies my work instead of breaking
+          it</em>. Almost everything I write is either AI or breaking production.
         </p>
         <p class="about-p">
           I also read more than I probably should, travel when I can, and write down what I'm thinking
@@ -194,7 +180,7 @@ function formatDate(date: Date) {
 
         <div class="signature">
           <div class="sig-name">— v.</div>
-          <div class="sig-place">bangalore · apr 2026</div>
+          <div class="sig-place">apr 2026</div>
         </div>
       </div>
 
@@ -262,9 +248,9 @@ function formatDate(date: Date) {
       <div class="cta-card">
         <div class="cta-left">
           <span class="cta-kicker">IF YOU'RE HIRING OR JUST CURIOUS</span>
-          <h2 class="cta-heading">Let's talk systems. <em>Or anything else.</em></h2>
+          <h2 class="cta-heading">Let's talk AI. <em>Or anything else.</em></h2>
           <p class="cta-para">
-            I'm open to SDE-2 roles where systems thinking matters and AI is a tool, not a threat.
+            I'm open to software roles where systems thinking matters and AI is a tool, not a threat.
             Also genuinely happy to talk to engineers working on interesting backend problems — hiring or not.
           </p>
         </div>
@@ -377,6 +363,17 @@ function formatDate(date: Date) {
   z-index: -1;
   border-radius: 2px;
   transform: skewX(-4deg) rotate(-0.5deg);
+}
+
+/* parenthetical in the headline — drops to body size so it reads as an
+   inline aside rather than part of the heading */
+.hero-aside {
+  font-family: var(--font-serif);
+  font-size: clamp(14px, 1vw, 16px);
+  font-style: italic;
+  letter-spacing: 0;
+  color: #8A8A82;
+  white-space: nowrap;
 }
 
 .hero-sub {
@@ -522,113 +519,16 @@ function formatDate(date: Date) {
   line-height: 1.4;
 }
 
-/* ─── CURRENTLY ─────────────────────────────────────────── */
-.currently { padding: 6rem 0; }
+/* ─── ARCHITECTURE GRAPH ────────────────────────────────── */
+.graph-frame { padding: 2rem 0 5rem; }
 
-.currently-inner {
+.graph-inner {
   max-width: 980px;
   margin: 0 auto;
   padding: 0 2rem;
-}
-
-.currently__stack {
-  position: relative;
-  max-width: 600px;
-  margin: 0 auto;
-}
-
-.currently__sheet {
-  background: #F0EDE3;
-  border: 1px solid rgba(15, 76, 58, 0.08);
-  border-radius: 2px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
-  padding: 2.5rem 2.25rem;
-}
-
-.currently__sheet--1 {
-  position: relative;
-  z-index: 3;
-  transform: rotate(-0.4deg);
-  box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.06),
-    0 8px 24px rgba(15, 76, 58, 0.08);
-}
-
-.currently__sheet--2 {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  transform: rotate(0.8deg) translate(6px, 8px);
-  background: #ECE9DD;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
-.currently__sheet--3 {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  transform: rotate(-1.2deg) translate(-4px, 14px);
-  background: #E5E1D2;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
-}
-
-.currently__head {
   display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  margin-bottom: 1.5rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 1px dashed rgba(15, 76, 58, 0.2);
+  justify-content: center;
 }
-
-.currently__label {
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: #0F4C3A;
-}
-
-.currently__date {
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  color: #8A8A82;
-}
-
-.currently__title {
-  font-family: var(--font-serif);
-  font-size: 1.5rem;
-  font-weight: 400;
-  margin: 0 0 0.25rem;
-  color: #1A1A17;
-}
-
-.currently__title em {
-  color: #0F4C3A;
-  font-style: italic;
-  font-weight: 400;
-}
-
-.currently__subtitle {
-  font-family: var(--font-serif);
-  font-style: italic;
-  font-size: 1.05rem;
-  color: #8A8A82;
-  line-height: 1.5;
-  margin: 0 0 1.5rem;
-}
-
-.currently__link {
-  font-family: var(--font-sans);
-  font-size: 0.85rem;
-  color: #0F4C3A;
-  text-decoration: none;
-  border-bottom: 1px solid currentColor;
-  padding-bottom: 1px;
-  transition: color 0.15s;
-}
-
-.currently__link:hover { color: #C4583A; }
 
 /* ─── NOTEBOOK ──────────────────────────────────────────── */
 .notebook-section { padding: 4rem 0 0; }
@@ -648,55 +548,6 @@ function formatDate(date: Date) {
   line-height: 1.55;
 }
 
-.filter-bar {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  flex-wrap: wrap;
-  margin: 1.5rem 0 1rem;
-  padding-bottom: 1rem;
-  border-bottom: 0.5px dashed #D9D5C7;
-}
-
-.filter-label {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  color: #8A8A82;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  margin-right: 6px;
-}
-
-.chip {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.02em;
-  padding: 5px 12px;
-  background: transparent;
-  border: 0.5px solid #D9D5C7;
-  border-radius: 20px;
-  color: #4A4A45;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.chip-count {
-  color: #8A8A82;
-  font-size: 10px;
-  margin-left: 4px;
-}
-
-.chip:hover { border-color: #0F4C3A; color: #0F4C3A; }
-
-.chip-active {
-  background: #0F4C3A;
-  border-color: #0F4C3A;
-  color: #F7F5EE;
-}
-
-.chip-active .chip-count { color: #B0CFC2; }
-
-.post-list { display: flex; flex-direction: column; }
 
 .post-row {
   display: grid;
@@ -1046,25 +897,6 @@ function formatDate(date: Date) {
 </style>
 
 <script>
-const chips = document.querySelectorAll<HTMLButtonElement>('.chip');
-const postRows = document.querySelectorAll<HTMLElement>('.post-row');
-
-chips.forEach(chip => {
-  chip.addEventListener('click', () => {
-    const filter = chip.dataset.filter!;
-    chips.forEach(c => c.classList.remove('chip-active'));
-    chip.classList.add('chip-active');
-    postRows.forEach(post => {
-      if (filter === 'all') {
-        (post as HTMLElement).style.display = '';
-      } else {
-        const tags = post.dataset.tags || '';
-        (post as HTMLElement).style.display = tags.split(' ').includes(filter) ? '' : 'none';
-      }
-    });
-  });
-});
-
 document.querySelectorAll<HTMLAnchorElement>('a[href^="#"]').forEach(anchor => {
   anchor.addEventListener('click', (e) => {
     e.preventDefault();

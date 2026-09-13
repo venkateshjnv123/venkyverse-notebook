@@ -18,8 +18,8 @@ const { roles } = rolesData;
         <span class="kicker-bar"></span>
         THE JOURNEY · 2019—NOW
       </span>
-      <h1 class="hero-h1">Six years of <em>learning to ship.</em></h1>
-      <p class="hero-desc">From mechanical engineering at IIT to backend systems at Cars24. The roles, the projects, the things that broke, and what each taught me.</p>
+      <h1 class="hero-h1">My journey across <em>different ships.</em></h1>
+      <p class="hero-desc">From IIT to backend systems at Cars24. The roles, the projects, the things that broke, and what each taught me.</p>
       <div class="stat-strip">
         <span>5 roles</span>
         <span class="dot">·</span>
@@ -43,15 +43,14 @@ const { roles } = rolesData;
               <span class="role-date">APR 2025 — PRESENT</span>
               <span class="role-status"><span class="status-dot"></span>CURRENT</span>
             </header>
-            <div class="role-title">SDE-1</div>
+            <div class="role-title">Builder: Backend engineering</div>
             <div class="role-where">
               <span class="role-company">Cars24</span>
               <span class="role-sep">·</span>
-              <span class="role-loc">Bangalore</span>
+              <span class="role-loc">Gurugram</span>
             </div>
             <p class="role-summary">Designing payment orchestration microservices and C2C platform features. Java + Spring Boot + heavy event-driven architecture, with payment gateways and seller/buyer workflows that need to stay reliable at scale.</p>
 
-            <p class="role-narrative">At Cars24 I work on two systems: a payment orchestration layer that smart-routes transactions across Razorpay, Juspay, Cashfree, and Paytm based on success rate, cost, and failover — and a C2C platform handling seller/buyer marketplace flows at thousands of users per minute. Both demand correctness, not just availability.</p>
 
             <div class="role-shipped-label">What I've shipped</div>
             <ul class="role-bullets">
@@ -69,10 +68,14 @@ const { roles } = rolesData;
               ))}
             </div>
 
+            {/* hidden per request — keep for v2
+
             <div class="role-lesson">
               <span class="lesson-label">WHAT THIS TAUGHT ME</span>
               <p class="lesson-body">Payments taught me that "eventually consistent" is a luxury you don't always get. Some systems demand correctness now, every time.</p>
             </div>
+
+            */}
           </div>
         </div>
 
@@ -87,7 +90,7 @@ const { roles } = rolesData;
             <div class="role-where">
               <span class="role-company">Sprinklr</span>
               <span class="role-sep">·</span>
-              <span class="role-loc">Bangalore</span>
+              <span class="role-loc">Gurugram</span>
             </div>
             <p class="role-summary">Built and owned test automation infrastructure for Sprinklr's Workforce Management module. Cut sanity run time from 12 hours to 2 hours across 1500 test cases. Engineered a JSON-driven API framework that eliminated DTO boilerplate entirely.</p>
             <div class="role-shipped-label">What I shipped</div>
@@ -102,10 +105,12 @@ const { roles } = rolesData;
                 <span class="pill">{t}</span>
               ))}
             </div>
+            {/* hidden per request — keep for v2
             <div class="role-lesson">
               <span class="lesson-label">WHAT THIS TAUGHT ME</span>
               <p class="lesson-body">Building test infrastructure is engineering, not "just QA". Bad tests kill velocity faster than bad code.</p>
             </div>
+            */}
           </div>
         </div>
 
@@ -134,10 +139,12 @@ const { roles } = rolesData;
                 <span class="pill">{t}</span>
               ))}
             </div>
+            {/* hidden per request — keep for v2
             <div class="role-lesson">
               <span class="lesson-label">WHAT THIS TAUGHT ME</span>
               <p class="lesson-body">First job is where you stop coding to learn and start coding to ship. Different skill.</p>
             </div>
+            */}
           </div>
         </div>
 
@@ -165,10 +172,12 @@ const { roles } = rolesData;
                 <span class="pill">{t}</span>
               ))}
             </div>
+            {/* hidden per request — keep for v2
             <div class="role-lesson">
               <span class="lesson-label">WHAT THIS TAUGHT ME</span>
               <p class="lesson-body">Watching real users break my code taught me more in 5 months than two years of college.</p>
             </div>
+            */}
           </div>
         </div>
 
@@ -199,10 +208,12 @@ const { roles } = rolesData;
                 <span class="pill">{t}</span>
               ))}
             </div>
+            {/* hidden per request — keep for v2
             <div class="role-lesson">
               <span class="lesson-label">WHAT THIS TAUGHT ME</span>
               <p class="lesson-body">The most useful course I "took" at IIT was the one I didn't enroll in — late nights, Stack Overflow, and the discovery that I liked computers more than gearboxes.</p>
             </div>
+            */}
           </div>
         </div>
 
@@ -210,17 +221,18 @@ const { roles } = rolesData;
     </div>
   </section>
 
-  <!-- Closing note -->
+  {/* hidden per request — closing note + signature
   <section class="closing-section">
     <div class="closing-inner">
       <p class="closing-text">Six years in, four companies, one career pivot. The pattern, looking back, is simple: pick the next thing that scares you a little, then write down what you learned along the way.</p>
       <p class="closing-text">The notebook continues.</p>
       <div class="closing-sig">
-        <div class="sig-name">— v. · bangalore</div>
+        <div class="sig-name">— v.</div>
         <div class="sig-date">apr 2026</div>
       </div>
     </div>
   </section>
+  */}
 
   <!-- CTA -->
   <section class="cta-wrap">

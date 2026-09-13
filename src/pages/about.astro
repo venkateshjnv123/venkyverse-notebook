@@ -17,9 +17,9 @@ import IllustrationFrame from '../components/IllustrationFrame.astro';
           <span class="kicker-bar"></span>
           ABOUT
         </span>
-        <h1 class="hero-h1">Hi, I'm Venkatesh.</h1>
-        <p class="hero-intro">I build backend systems for a living, write down what I learn, and try to do both with care. This is the longer version of who I am — the homepage is the elevator pitch.</p>
-        <span class="hero-sig">— v. · bangalore</span>
+        <h1 class="hero-h1">Hi, I'm Venkatesh Patnala.</h1>
+        <p class="hero-intro">I build backend systems and write down what I learn.</p>
+        <span class="hero-sig">— v.</span>
       </div>
       <div class="hero-image-col">
         <IllustrationFrame caption="sketched by AI · somewhere along a river" />
@@ -27,7 +27,7 @@ import IllustrationFrame from '../components/IllustrationFrame.astro';
     </div>
   </section>
 
-  <!-- Currently callout -->
+  {/* hidden per request — currently callout paused
   <div class="currently-wrap">
     <a href="/#currently" class="currently-callout">
       <div class="currently-left">
@@ -38,9 +38,9 @@ import IllustrationFrame from '../components/IllustrationFrame.astro';
           <span class="currently-sub">and reading <em>Designing Data-Intensive Applications</em>, again.</span>
         </div>
       </div>
-      <span class="currently-link">see what's in the lab →</span>
     </a>
   </div>
+  */}
 
   <!-- Section 01 · Origin -->
   <section class="about-section">
@@ -51,51 +51,28 @@ import IllustrationFrame from '../components/IllustrationFrame.astro';
       </div>
       <h2 class="section-h2">How I got here.</h2>
       <div class="body-text">
-        <p>I grew up in Andhra Pradesh, with a curiosity about how things work that eventually landed me in computer science. The interest started early — not from any grand ambition, just from noticing that software was the one thing where you could build something real without needing money or materials.</p>
-        <p>I joined IIT Jodhpur for B.Tech CSE in 2019. The first year was disorienting — algorithms felt abstract, and I wasn't sure I'd ever enjoy coding outside of problem sets. Second year flipped that. We started building actual systems — small services, real data — and something clicked. The satisfaction of watching a system handle real load felt different from anything else.</p>
-        <p>By third year, I was interning at Aspiro and accidentally falling in love with backend specifically. There's something about the invisibility of it — when you do it well, no one notices, but when you mess up, the whole product breaks. That kind of responsibility appealed to me.</p>
+        <p>I grew up in Andhra Pradesh, studying at Jawahar Navodaya Vidyalaya.</p>
+        <p>At IIT Jodhpur, mechanical was the degree but I liked computer science (maybe it's easier to build). Second year we started shipping real systems. An internship at Aspiro showed me what software is. I liked the invisible work, the kind nobody notices until it breaks.</p>
+        <p>Since April 2025 I've been a backend engineer at Cars24, working on high-volume data flows: listings, pricing pipelines, event-driven workflows that have to stay consistent under load.</p>
+        <p>And yes — for the last 3 years I've been living in Gurugram, Haryana, swimming to office in the monsoons.</p>
       </div>
     </div>
   </section>
 
-  <!-- Section 02 · Current Work -->
+  <!-- Section 02 · How I Work -->
   <section class="about-section">
     <div class="section-inner">
       <div class="section-kicker">
         <span class="kicker-bar"></span>
-        02 · CURRENT WORK
-      </div>
-      <h2 class="section-h2">What I'm building at <em class="green-em">Cars24.</em></h2>
-      <div class="body-text">
-        <p>I joined Cars24 in 2023 as a backend engineer. The work centres around high-volume data flows — vehicle listings, pricing pipelines, event-driven workflows that need to stay consistent under load.</p>
-        <p>The interesting work has been on scaling event pipelines as inventory grew, redesigning webhook handling to deal with out-of-order delivery, and introducing smarter caching strategies at multiple layers. Most days are a mix of writing and reviewing code, debugging things that broke, and trying to predict the next thing that might break.</p>
-        <p>I'm on the SDE-2 track — which in practice means taking ownership of larger systems, helping newer engineers get unstuck faster, and being expected to make architecture decisions that hold up over time. The shift from <em>how</em> to <em>why</em> is the most interesting part of that progression.</p>
-      </div>
-      <div class="theme-pills">
-        <span class="theme-label">recent themes:</span>
-        <span class="pill">distributed systems</span>
-        <span class="pill">caching strategies</span>
-        <span class="pill">event-driven architecture</span>
-        <span class="pill">AI-paired development</span>
-      </div>
-    </div>
-  </section>
-
-  <!-- Section 03 · How I Work -->
-  <section class="about-section">
-    <div class="section-inner">
-      <div class="section-kicker">
-        <span class="kicker-bar"></span>
-        03 · HOW I WORK
+        02 · HOW I WORK
       </div>
       <h2 class="section-h2">AI in the loop, <em class="green-em">not at the wheel.</em></h2>
       <div class="body-text">
-        <p>Every engineer on LinkedIn is debating whether to use AI. I find that debate boring — the more interesting question is <em>how</em> you use it.</p>
-        <p>Here's roughly how I work: I reach for AI when I need to scaffold something fast, explore an unfamiliar library, or generate test cases for edge conditions I'd otherwise miss. I don't reach for it when making architecture decisions, debugging subtle race conditions, or figuring out what's worth building in the first place.</p>
-        <p>What AI does well for me: first drafts, boilerplate, documentation, test generation. What it doesn't do for me: production context, system topology awareness, deciding which tradeoffs matter.</p>
-        <p>The pattern I've found that works is this — AI handles the shape, I handle the intent. AI writes the first version, I do the critical read. The lesson I keep relearning is that AI generates working code, but working ≠ production-ready. That gap is where the senior engineer still earns their salary.</p>
+        <p>The "should you use AI" question bores me. The real question is <em>how much</em> I use.</p>
+        <p>I reach for AI on most of my work, trying to automate the flows that need less attention — a summary of stock news at 9 AM, a summary of office work and meetings at 10 AM. I use it to find the missing edge case, to write test cases, to test flows — not only to write code.</p>
+        <p>The pattern that works: AI handles the shape, I handle the architecture and intent. It writes the first version, I do the critical read. Working code isn't production-ready code, and maybe not clean code either.</p>
       </div>
-      <blockquote class="pullquote">AI writes the code. The critical read is still mine.</blockquote>
+      <blockquote class="pullquote">AI writes the code. I do the reading and the optimizing.</blockquote>
     </div>
   </section>
 
@@ -104,18 +81,15 @@ import IllustrationFrame from '../components/IllustrationFrame.astro';
     <div class="section-inner">
       <div class="section-kicker">
         <span class="kicker-bar"></span>
-        04 · WHAT'S NEXT
+        03 · WHAT'S NEXT
       </div>
       <h2 class="section-h2">What I'm <em class="green-em">chasing</em> now.</h2>
       <div class="body-text">
-        <p>The next year or two, I want to:</p>
         <ul class="about-list">
-          <li>Get deeper into distributed systems design — actually intuiting CAP tradeoffs, not just memorising them.</li>
-          <li>Ship a side project I'd be proud to show. Right now that's the content automation pipeline I've been building.</li>
-          <li>Write more, write more clearly, write more honestly.</li>
-          <li>Find a team where systems thinking is a default, not a fight.</li>
+          <li>Get genuinely good at distributed systems — intuit CAP tradeoffs, not memorise them.</li>
+          <li>Checking how much I can automate with AI.</li>
+          <li>Write more, and more honestly.</li>
         </ul>
-        <p>Long term: I want to be a staff engineer who's known for getting hard architecture decisions right and explaining them simply. That probably takes another 4-5 years of doing the work. I'm okay with that.</p>
       </div>
     </div>
   </section>
@@ -125,12 +99,12 @@ import IllustrationFrame from '../components/IllustrationFrame.astro';
     <div class="section-inner">
       <div class="section-kicker">
         <span class="kicker-bar"></span>
-        05 · OFF SCREEN
+        04 · OFF SCREEN
       </div>
       <h2 class="section-h2">Things that aren't <em class="green-em">code.</em></h2>
       <div class="body-text">
-        <p>I read a lot — mostly nonfiction, some philosophy, occasionally a novel I'm late to. I travel when I can; my best ideas usually come on long bus rides somewhere with bad cell service. Movies, sometimes — though I'm pickier about those than I should be.</p>
-        <p>If you're curious what I'm reading, watching, or where I went last — there's <a href="/life" class="gu">/life</a> for that.</p>
+        <p>I read a lot — mostly nonfiction. I travel when I can.</p>
+        <p>What I'm reading, watching, or where I went last — it's all on <a href="/life" class="gu">/life</a>.</p>
       </div>
     </div>
   </section>
@@ -140,14 +114,14 @@ import IllustrationFrame from '../components/IllustrationFrame.astro';
     <div class="section-inner">
       <div class="section-kicker">
         <span class="kicker-bar"></span>
-        06 · EDUCATION
+        05 · EDUCATION
       </div>
       <h2 class="section-h2">Where I <em class="green-em">learned.</em></h2>
       <div class="edu-timeline">
         <div class="edu-entry">
           <div class="edu-year">2019 — 2023</div>
           <div class="edu-detail">
-            <div class="edu-title">B.Tech, Computer Science</div>
+            <div class="edu-title">B.Tech, Mechanical Engineering</div>
             <div class="edu-where">Indian Institute of Technology, Jodhpur</div>
           </div>
         </div>

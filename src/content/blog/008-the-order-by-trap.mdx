@@ -1,0 +1,56 @@
+---
+id: "'008'"
+title: "The ORDER BY Trap"
+tagline: "Looked free. Cost 8 seconds."
+tags: ['prod-bug', 'system-design']
+date: 2026-05-25
+readTime: 2
+linkedin_url: "https://www.linkedin.com/posts/venkatesh-patnala-927a521b0_java-springboot-backenddevelopment-activity-7463079882126741504-YSzV?utm_source=share&utm_medium=member_desktop&rcm=ACoAADFG368BFeVJIpPKSrai_UiHr_xTBGS54Yw"
+hero_image: "/images/008-the-order-by-trap/hero_image.jpg"
+draft: false
+signoff: "What's a 'basic' SQL thing you've seen quietly destroy your prod?"
+---
+
+![The ORDER BY Trap](/images/008-the-order-by-trap/hero_image.jpg)
+
+**Manager:** API latency went to 8 seconds.\
+**Junior me:** I just added `ORDER BY created_at` bhaiya 😅\
+**Manager:** 😶
+
+The query looked innocent:
+
+```sql
+SELECT * FROM orders
+WHERE user_id = ?
+ORDER BY created_at DESC
+LIMIT 20
+```
+
+Works fine in dev. 100 rows. 5ms.
+
+Then it hits a table with 10M rows... suddenly 8 seconds. 💀
+
+**What's actually happening:**
+
+1. DB filters by `user_id` ✅ (index hits)
+2. Gets back \~50k matching rows
+3. Sorts all 50k by `created_at` in memory 😩
+4. Returns top 20
+
+That sort step runs on every single call. No index on `created_at` = full in-memory sort, every time.
+
+**The fix is almost boring:**
+
+```sql
+-- composite index on (user_id, created_at DESC)
+CREATE INDEX idx_orders_user_date
+  ON orders (user_id, created_at DESC);
+```
+
+DB uses the index already in order, stops after 20 rows. ✅
+
+50k row sort → 20 row index scan.
+
+I used to think `ORDER BY` was free. It isn't — without the right index, it's a hidden sort hiding in plain sight.
+
+Indexes aren't just for `WHERE` clauses. They're for `ORDER BY` and `LIMIT` too.

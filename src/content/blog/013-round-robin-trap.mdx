@@ -1,0 +1,56 @@
+---
+id: '013'
+title: When Round Robin Drowned Our Agents
+tagline: Fair on paper. Chaos in production.
+tags:
+  - prod-bug
+  - system-design
+date: 2026-05-25
+readTime: 2
+hero_image: /images/013-round-robin-trap/hero_image.jpg
+draft: false
+signoff: How does your team handle agent allocation at scale?
+---
+![When Round Robin Drowned Our Agents](/images/013-round-robin-trap/hero_image.jpg)
+
+One agent suddenly had 500 leads. Conversions dropped silently. 💀
+
+Our lead assignment flow was simple:
+
+> Agent 1 → Agent 2 → Agent 3 → repeat
+
+Worked perfectly for months.
+
+Then production reality kicked in.
+
+Agents go on break. Agents change shifts. Agents leave the team. Agents go offline mid-day.
+
+Round robin happily kept skipping them. Remaining agents kept absorbing leads. Some started drowning. 🌊
+
+**Round robin assumes every agent is available all the time. Production never works that way.**
+
+!\[Round Robin vs Smart Assignment — before and after]\(/images/round-robin-trap.png)
+
+## How we fixed it
+
+**1. Hard cap per agent**
+
+Every agent gets a max active lead count — say, 50. Before assigning, check the cap. At cap? Skip or queue. Simple, but it stops one agent from absorbing everything when others go offline.
+
+**2. Smart scoring**
+
+Instead of position in a rotation, each agent gets a score:
+
+```
+score = current_load + activity_weight + availability_flag
+```
+
+Lowest score wins the lead. An agent on break scores high (unavailable), an agent with 20/50 leads scores lower than one at 45/50. The system routes to whoever can actually handle it.
+
+If everyone is at cap, the lead goes to a queue — not to the most overwhelmed person.
+
+---
+
+Round robin is a great algorithm for stateless, always-available resources. Agents are neither.
+
+Perfect algorithms fail when reality doesn't match the assumption. Production humbled us. 😅

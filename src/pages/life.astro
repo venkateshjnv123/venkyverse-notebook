@@ -1,8 +1,26 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import currently from '../data/currently.json';
 import booksData from '../data/books.json';
 import tripsData from '../data/trips.json';
+import { getCollection } from 'astro:content';
+
+const interviews = (await getCollection('interviews', ({ data }) => !data.draft))
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
+  .slice(0, 3);
+
+const verdictLabel: Record<string, string> = {
+  offer: 'offer',
+  rejected: 'rejected',
+  withdrawn: 'withdrawn',
+  'in-progress': 'in progress',
+};
+
+// Keystatic stores bare filenames for covers; prefix them for use as <img src>.
+function coverSrc(cover: string | undefined | null): string {
+  if (!cover) return '';
+  if (/^(https?:)?\/\//.test(cover) || cover.startsWith('/')) return cover;
+  return `/images/covers/${cover}`;
+}
 ---
 <BaseLayout
   title="Life · Venkatesh Patnala"
@@ -19,26 +37,35 @@ import tripsData from '../data/trips.json';
     </div>
   </header>
 
-  <!-- Currently building -->
-  <section class="currently">
-    <div class="currently-inner">
-      <div class="currently__stack">
-        <div class="currently__sheet currently__sheet--3" aria-hidden="true"></div>
-        <div class="currently__sheet currently__sheet--2" aria-hidden="true"></div>
-        <article class="currently__sheet currently__sheet--1">
-          <header class="currently__head">
-            <span class="currently__label">currently</span>
-            <span class="currently__date">{currently.since}</span>
-          </header>
-          <h2 class="currently__title">
-            {currently.kind} <em>{currently.title}</em>
-          </h2>
-          <p class="currently__subtitle">{currently.subtitle}</p>
-          <a href="/journey" class="currently__link">what I'm shipping →</a>
-        </article>
+  <!-- Interviews -->
+  {interviews.length > 0 && (
+    <section class="iv-section">
+      <div class="iv-inner">
+        <div class="section-heading">
+          <div>
+            <div class="section-kicker">INTERVIEWS · {interviews.length} WRITTEN UP</div>
+            <h2 class="section-h2">How the rounds <em>actually went.</em></h2>
+          </div>
+          <a class="section-link" href="/interviews">all write-ups →</a>
+        </div>
+
+        <div class="iv-grid">
+          {interviews.map(entry => (
+            <a href={`/interviews/${entry.id}`} class="iv-mini">
+              <div class="iv-mini__top">
+                <span class="iv-mini__company">{entry.data.company}</span>
+                <span class={`verdict-pill verdict--${entry.data.verdict}`}>
+                  {verdictLabel[entry.data.verdict]}
+                </span>
+              </div>
+              <span class="iv-mini__role">{entry.data.role} · {entry.data.rounds.length} round{entry.data.rounds.length === 1 ? '' : 's'}</span>
+              <p class="iv-mini__tagline">{entry.data.tagline}</p>
+            </a>
+          ))}
+        </div>
       </div>
-    </div>
-  </section>
+    </section>
+  )}
 
   <!-- Books -->
   <section class="books-section">
@@ -56,7 +83,7 @@ import tripsData from '../data/trips.json';
           <a href="/life/books" class="book-card">
             <div class={`book-card__cover${!book.cover ? ' book-card__cover--placeholder' : ''}`}>
               {book.cover
-                ? <img src={book.cover} alt={book.title} loading="lazy" />
+                ? <img src={coverSrc(book.cover)} alt={book.title} loading="lazy" />
                 : <span>{book.title.split(' ').slice(0, 2).join(' ')}</span>
               }
             </div>
@@ -93,6 +120,97 @@ import tripsData from '../data/trips.json';
 </BaseLayout>
 
 <style>
+/* ─── Interviews ──────────────────────────────────────────── */
+.iv-section {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 2.5rem 2rem 0;
+}
+
+.iv-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+}
+
+.iv-mini {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 1.1rem 1.25rem;
+  background: #FDFCF6;
+  border: 0.5px solid #D9D5C7;
+  border-radius: 12px;
+  text-decoration: none;
+  transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+}
+
+.iv-mini:hover {
+  transform: translateY(-2px);
+  border-color: #0F4C3A;
+  box-shadow: 0 6px 18px rgba(15, 76, 58, 0.09);
+}
+
+.iv-mini__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.iv-mini__company {
+  font-family: var(--font-serif);
+  font-size: 19px;
+  color: #1A1A17;
+  letter-spacing: -0.01em;
+}
+
+.iv-mini__role {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #8A8A82;
+}
+
+.iv-mini__tagline {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #4A4A45;
+  margin: 0.25rem 0 0;
+}
+
+.verdict-pill {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 4px 8px;
+  border-radius: 999px;
+}
+
+.verdict--offer {
+  background: rgba(15, 76, 58, 0.1);
+  color: #0F4C3A;
+  border: 0.5px solid rgba(15, 76, 58, 0.35);
+}
+
+.verdict--rejected {
+  background: rgba(196, 88, 58, 0.1);
+  color: #C4583A;
+  border: 0.5px solid rgba(196, 88, 58, 0.35);
+}
+
+.verdict--withdrawn,
+.verdict--in-progress {
+  background: rgba(214, 158, 46, 0.12);
+  color: #A17617;
+  border: 0.5px solid rgba(214, 158, 46, 0.4);
+}
+
 /* ─── Header ──────────────────────────────────────────────── */
 .life-header {
   max-width: 980px;

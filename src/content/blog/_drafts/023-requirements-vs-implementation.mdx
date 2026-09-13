@@ -1,0 +1,110 @@
+---
+id: '023'
+title: 4 - 2 = 2. Logically Correct.
+tagline: Remove 2 sides from a rectangle and it's not a rectangle anymore.
+tags:
+  - system-design
+date: 2026-06-01
+readTime: 3
+hero_image: /images/023-requirements-vs-implementation/hero_image.jpg
+draft: true
+signoff: What's a requirement gap that bit you in prod?
+---
+4 - 2 = 2. Logically correct.
+
+But remove 2 sides from a rectangle and it's not a rectangle anymore.
+
+This is the gap between *requirement* and *implementation*. And honestly? It's behind half the bugs I've seen in production.
+
+## The examples that hit me
+
+**"Send a notification when payment succeeds."**
+
+Simple. Clear. On `PaymentSuccessEvent` → fire notification.
+
+What the requirement didn't say: payment APIs retry on timeout. A single payment can fire `PaymentSuccessEvent` three times.
+
+Result: user gets 3 "Payment Successful" messages. Not because the code was wrong — the code did exactly what the requirement said. The requirement was incomplete.
+
+```java
+// What we wrote
+@EventListener
+public void onPaymentSuccess(PaymentSuccessEvent event) {
+    notificationService.send(event.getUserId(), "PAYMENT_SUCCESS");
+}
+
+// What we needed
+@EventListener
+public void onPaymentSuccess(PaymentSuccessEvent event) {
+    // Guard against duplicate events for same payment
+    if (notificationTracker.alreadySent(event.getPaymentId(), "PAYMENT_SUCCESS")) return;
+    notificationService.send(event.getUserId(), "PAYMENT_SUCCESS");
+    notificationTracker.markSent(event.getPaymentId(), "PAYMENT_SUCCESS");
+}
+```
+
+**"Mark the order complete after delivery."**
+
+On `DeliveryConfirmedEvent` → update order status to `COMPLETE`.
+
+What the requirement didn't say: delivery confirmation can come in partial batches. Sometimes the event fires when 2 of 4 items are delivered.
+
+Result: orders marked complete while still partially in transit. Customer support nightmare.
+
+```java
+// What we wrote
+@EventListener
+public void onDeliveryConfirmed(DeliveryConfirmedEvent event) {
+    orderService.markComplete(event.getOrderId());
+}
+
+// What we needed
+@EventListener
+public void onDeliveryConfirmed(DeliveryConfirmedEvent event) {
+    Order order = orderService.findById(event.getOrderId());
+    if (order.allItemsDelivered()) {
+        orderService.markComplete(order.getId());
+    }
+}
+```
+
+Both bugs: code was correct. Requirements were incomplete.
+
+## The pattern
+
+Requirements describe the happy path. Implementation inherits all the edge cases the requirement didn't mention.
+
+```
+Requirement: "Do X when Y happens"
+
+Hidden assumptions:
+- Y happens exactly once
+- Y happens in order
+- Y's state is final when it fires
+- No retries, no partial states, no concurrent updates
+- Dev scale == prod scale
+```
+
+Every one of those is a potential bug in production.
+
+## Closing the gap
+
+When a requirement lands, run it through these questions before writing the first line of code:
+
+**Can this event fire more than once?**
+→ Add idempotency keys. Track what you've already processed.
+
+**What happens at partial states?**
+→ Ask: "what does 'complete' actually mean?" Not "what triggers the transition."
+
+**What does this look like at 10x traffic?**
+→ A loop that's fine at 100 rows will break at 100,000. A query that's fast on 1k records will crawl on 10M.
+
+**What if the external dependency misbehaves?**
+→ Retries, timeouts, duplicate deliveries — external systems don't guarantee exactly-once.
+
+The boring answers: idempotency keys, state machine transitions, event deduplication. They exist because requirements are always written for the happy path.
+
+Localhost only runs the happy path. Production finds everything else.
+
+The failure mode is the same whether it's an AI generating code or a human reading requirements. The bug is in the assumption, not the logic.

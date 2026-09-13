@@ -5,11 +5,13 @@ tagline: "Two webhooks. Same row. One vanished."
 tags: ['prod-bug', 'system-design']
 date: 2026-05-25
 readTime: 3
-linkedin_url: ""
-hero_image: ""
+linkedin_url: "https://www.linkedin.com/posts/venkatesh-patnala-927a521b0_100s-of-payments-ended-up-in-a-broken-state-activity-7462361039561629697-5BGt?utm_source=share&utm_medium=member_desktop&rcm=ACoAADFG368BFeVJIpPKSrai_UiHr_xTBGS54Yw"
+hero_image: "/images/009-concurrent-webhook-race-hero.png"
 draft: false
 signoff: "How do you handle concurrent writes in your payment flow?"
 ---
+
+![Hundreds of payments, broken in one millisecond](/images/009-concurrent-webhook-race-hero.png)
 
 100s of payments ended up in a broken state. 💀
 
@@ -31,7 +33,7 @@ Classic concurrent write race. Razorpay retried the webhook, we processed both, 
 
 ---
 
-![The fix: versioning + retry = concurrency handled](/images/concurrent-webhooks-fix.png)
+![The fix: versioning + retry = concurrency handled](/images/009-concurrent-webhook-race-fix-hero.png)
 
 ## How we fixed it
 

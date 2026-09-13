@@ -3,6 +3,15 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import booksData from '../../data/books.json';
 
 const { books } = booksData;
+
+// Keystatic's image field stores just the filename in books.json. Normalise to
+// a usable src: absolute URLs and rooted paths pass through; bare filenames get
+// the /images/covers/ prefix.
+function coverSrc(cover: string | undefined | null): string {
+  if (!cover) return '';
+  if (/^(https?:)?\/\//.test(cover) || cover.startsWith('/')) return cover;
+  return `/images/covers/${cover}`;
+}
 ---
 <BaseLayout
   title="Books · Venkatesh Patnala"
@@ -38,7 +47,7 @@ const { books } = booksData;
           <div class="book">
             <div class={`book__cover${!book.cover ? ' book__cover--placeholder' : ''}`}>
               {book.cover
-                ? <img src={book.cover} alt={book.title} loading="lazy" />
+                ? <img src={coverSrc(book.cover)} alt={book.title} loading="lazy" />
                 : <span>{book.title.split(' ').slice(0, 3).join(' ')}</span>
               }
             </div>
